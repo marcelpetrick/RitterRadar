@@ -7,7 +7,13 @@
 # (at your option) any later version.
 """Crawl API — queue status and manual trigger."""
 
-from fastapi import APIRouter, Request
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Request
+from sqlmodel import Session, func, select
+
+from ritterradar.database.session import get_session
+from ritterradar.models.market import Market
 
 router = APIRouter(prefix="/api/crawl", tags=["crawl"])
 
@@ -19,6 +25,18 @@ async def crawl_status(request: Request) -> dict[str, object]:
     if queue is None:
         return {"error": "crawler not initialised"}
     return queue.get_status()  # type: ignore[no-any-return]
+
+
+@router.get("/geo-progress")
+async def geo_progress(
+    session: Annotated[Session, Depends(get_session)],
+) -> dict[str, int]:
+    """Return how many markets have / lack geocoordinates."""
+    total    = session.exec(select(func.count()).select_from(Market)).one() or 0
+    geocoded = session.exec(
+        select(func.count()).select_from(Market).where(Market.latitude.isnot(None))  # type: ignore[union-attr]
+    ).one() or 0
+    return {"total": total, "geocoded": geocoded, "pending": total - geocoded}
 
 
 @router.post("/trigger")

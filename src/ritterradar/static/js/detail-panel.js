@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  * Copyright (C) 2026 Marcel Petrick <mail@marcelpetrick.it>
  */
+import { appLog } from './activity-log.js';
 
 const PANEL  = () => document.getElementById('detail-panel');
 const CONTENT = () => document.getElementById('detail-content');
@@ -119,10 +120,12 @@ function renderDetail(market) {
         const { hidden } = await r.json();
         btn.dataset.hidden = hidden;
         btn.textContent    = hidden ? '👁 Einblenden' : '🚫 Ausblenden';
-        // Re-fetch markers to remove/show the market
+        appLog('info', hidden ? 'Markt ausgeblendet' : 'Markt wieder eingeblendet');
         window.dispatchEvent(new CustomEvent('markets-refresh'));
       }
-    } catch (_) { /* ignore */ }
+    } catch (err) {
+      appLog('error', `Ausblenden fehlgeschlagen: ${err.message}`);
+    }
   });
 }
 
@@ -136,7 +139,12 @@ function closePanel() {
 }
 
 // Listen for market selection from map.js
-window.addEventListener('market-selected', e => openPanel(e.detail));
+window.addEventListener('market-selected', e => {
+  openPanel(e.detail);
+  const m = e.detail;
+  const loc = [m.postal_code, m.city].filter(Boolean).join(' ') || '?';
+  appLog('info', `Markt geöffnet: ${m.name} (${loc})`);
+});
 
 // Close button
 document.addEventListener('DOMContentLoaded', () => {

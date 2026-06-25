@@ -612,7 +612,9 @@ input[type="range"]::-moz-range-thumb {
 .job-status.failed    { color: #cc4444; }
 .job-status.skipped   { color: var(--text-muted); }
 .job-count   { color: var(--text-muted); }
-.job-error   { color: #cc4444; font-size: 0.75rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.job-error   { color: #cc6666; font-size: 0.75rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.job-header  { color: var(--text-muted); font-size: 0.73rem; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid rgba(197,160,40,0.2); background: rgba(197,160,40,0.04); }
+.job-empty   { padding: 0.5rem 1rem; color: var(--text-muted); font-size: 0.82rem; font-style: italic; }
 
 /* ═══════════════════════════════════════════════════════════
    Leaflet overrides — medieval marker style
