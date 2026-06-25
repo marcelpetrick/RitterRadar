@@ -8,6 +8,7 @@ from ritterradar.crawler.adapters import (  # noqa: F401
     mittelalterfeste,
     mittelalterkalender_info,
     mittelaltermarkt,
+    mittelaltermarkt_online,
     ritterschaft,
     schwerttanz,
     spectaculum,

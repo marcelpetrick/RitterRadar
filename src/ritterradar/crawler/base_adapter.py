@@ -33,6 +33,10 @@ class MarketData:
     source_url: str = ""
     confidence_score: float = 1.0
     tags: list[str] = field(default_factory=list)
+    # Adapters that already have coordinates (e.g. via a JSON API) may set these
+    # to skip Nominatim geocoding entirely.
+    latitude: float | None = None
+    longitude: float | None = None
 
 
 class AbstractCrawlerAdapter(ABC):

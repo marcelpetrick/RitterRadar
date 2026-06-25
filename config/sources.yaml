@@ -47,6 +47,15 @@ sources:
     enabled: true
     crawl_interval_hours: 24
 
+  # Mittelaltermarkt.online — WordPress + The Events Calendar REST API.
+  # 531 events for 2026-2027 with pre-geocoded lat/lon from venue object.
+  # Uses /wp-json/tribe/events/v1/events?status=publish, paginated JSON.
+  - name: "Mittelaltermarkt.online"
+    url: "https://mittelaltermarkt.online"
+    adapter: "mittelaltermarkt_online"
+    enabled: true
+    crawl_interval_hours: 24
+
   # ── DISABLED — investigate before re-enabling ─────────────────────────
 
   # mittelalterfeste.de — domain expired, now parked on Sedo (sedo.com).

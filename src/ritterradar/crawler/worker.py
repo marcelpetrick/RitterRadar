@@ -109,11 +109,15 @@ class CrawlWorker:
 
         for mdata in markets:
             lat, lon, uncertain = None, None, False
-            geo_query = _build_geo_query(mdata)
-            if geo_query:
-                result = await geocode(geo_query, user_agent)
-                if result:
-                    lat, lon, uncertain = result.latitude, result.longitude, result.uncertain
+            if mdata.latitude is not None and mdata.longitude is not None:
+                # Adapter already resolved coordinates (e.g. from a JSON API)
+                lat, lon, uncertain = mdata.latitude, mdata.longitude, False
+            else:
+                geo_query = _build_geo_query(mdata)
+                if geo_query:
+                    result = await geocode(geo_query, user_agent)
+                    if result:
+                        lat, lon, uncertain = result.latitude, result.longitude, result.uncertain
 
             ins, upd = _upsert_market(mdata, lat, lon, uncertain, source_name)
             inserted += ins
