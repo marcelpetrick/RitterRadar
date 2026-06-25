@@ -63,6 +63,10 @@ class CrawlWorker:
 
     async def _process(self, job_id: int, client: PoliteHttpClient) -> None:
         settings = get_settings()
+        source_name: str = ""
+        source_adapter: str = ""
+        source_id: int | None = None
+
         with Session(get_engine()) as session:
             job = session.get(CrawlJob, job_id)
             if job is None:
@@ -76,23 +80,28 @@ class CrawlWorker:
                 session.commit()
                 return
 
+            # Read all attributes we need before session closes
+            source_name    = job.source_name
+            source_adapter = source.adapter_name
+            source_id      = source.id
+
             job.status = "running"
             job.started_at = datetime.now(timezone.utc)
             session.add(job)
             session.commit()
 
-        logger.info("Worker %d: crawling %s", self._worker_id, job.source_name)
+        logger.info("Worker %d: crawling %s", self._worker_id, source_name)
         try:
-            adapter = get_adapter(source.adapter_name)
+            adapter = get_adapter(source_adapter)
         except KeyError:
-            await self._fail(job_id, f"Unknown adapter: {source.adapter_name!r}")
+            await self._fail(job_id, f"Unknown adapter: {source_adapter!r}")
             return
 
         try:
             markets = await adapter.crawl(client)
         except Exception as exc:
             await self._fail(job_id, str(exc))
-            await self._update_source_error(source.id, str(exc))
+            await self._update_source_error(source_id, str(exc))
             return
 
         inserted = updated = 0
@@ -106,16 +115,16 @@ class CrawlWorker:
                 if result:
                     lat, lon, uncertain = result.latitude, result.longitude, result.uncertain
 
-            ins, upd = _upsert_market(mdata, lat, lon, uncertain, source.name)
+            ins, upd = _upsert_market(mdata, lat, lon, uncertain, source_name)
             inserted += ins
             updated += upd
 
         await self._complete(job_id, len(markets), inserted, updated)
-        await self._update_source_success(source.id)
+        await self._update_source_success(source_id)
         logger.info(
             "Worker %d: %s done — %d found, %d inserted, %d updated",
             self._worker_id,
-            job.source_name,
+            source_name,
             len(markets),
             inserted,
             updated,
