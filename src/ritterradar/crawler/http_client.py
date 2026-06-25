@@ -123,7 +123,9 @@ def make_client(verify: bool = True) -> httpx.AsyncClient:
             "User-Agent": _USER_AGENT,
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
             "Accept-Language": "de-DE,de;q=0.9,en;q=0.5",
-            "Accept-Encoding": "gzip, deflate, br",
+            # Omit Accept-Encoding: let httpx manage it.  Explicitly advertising
+            # "br" causes servers to send brotli-compressed responses that httpx
+            # cannot decode without the optional 'brotli' package installed.
         },
         timeout=_TIMEOUT,
         follow_redirects=True,

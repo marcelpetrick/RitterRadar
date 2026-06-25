@@ -5,8 +5,10 @@
 from ritterradar.crawler.adapters import (  # noqa: F401
     generic_table,
     mittelalterfeste,
+    mittelalterkalender_info,
     mittelaltermarkt,
     ritterschaft,
     schwerttanz,
     spectaculum,
+    vehi_mercatus,
 )

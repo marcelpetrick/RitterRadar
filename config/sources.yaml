@@ -11,10 +11,27 @@
 #   crawl_interval_hours:  Minimum hours between re-crawls (default: 24)
 
 sources:
-  # ── ACTIVE ────────────────────────────────────────────────────────────
-  # MPS Mittelalterlich Phantasie Spectaculum.
-  # NOTE: /termine returns 403. Homepage lists all upcoming events in the
-  # nav so the adapter scrapes the homepage directly.
+  # ── ACTIVE SOURCES (verified working 2026-06-25) ──────────────────────
+
+  # 800+ events per year. Table at /mittelalterfeste-{YEAR}-nach-datum.php.
+  # Columns: start date | end date | event name (button) | PLZ | city.
+  - name: "Mittelalterkalender.info"
+    url: "https://www.mittelalterkalender.info"
+    adapter: "mittelalterkalender_info"
+    enabled: true
+    crawl_interval_hours: 24
+
+  # 287 German events for 2026 (526 including all countries).
+  # Paginated list at /marktkalender/?ansicht=liste&land=Deutschland&jahr=YEAR.
+  # Columns: date | event name | PLZ + city | event type.
+  - name: "Vehi Mercatus Marktkalender"
+    url: "https://vehi-mercatus.de/marktkalender/"
+    adapter: "vehi_mercatus"
+    enabled: true
+    crawl_interval_hours: 24
+
+  # MPS — Mittelalterlich Phantasie Spectaculum.
+  # ~9 major events per year. Scraped from homepage nav (not /termine which returns 403).
   - name: "Spectaculum.de"
     url: "https://www.spectaculum.de"
     adapter: "spectaculum"
@@ -31,22 +48,20 @@ sources:
     enabled: false
 
   # schwerttanz.de — Schwerttanz Traunstein (folk dance club, not a market
-  # calendar). SSL cert issued for "hypenat-casa-25.netboot.nethost.cz".
-  # /marktkalender returns 404. No relevant event data.
+  # calendar). TLS cert issued for "hypenat-casa-25.netboot.nethost.cz".
   - name: "Schwerttanz Marktkalender"
     url: "https://www.schwerttanz.de/marktkalender"
     adapter: "schwerttanz"
     enabled: false
 
   # ritterschaft.de — domain resolves to unrelated droids.de host content.
-  # SSL cert issued for "mx01.droids.de". No relevant event data.
+  # TLS cert issued for "mx01.droids.de".
   - name: "Ritterschaft.de"
     url: "https://www.ritterschaft.de/termine"
     adapter: "ritterschaft"
     enabled: false
 
-  # mittelaltermarkt.com — domain listed for sale ("Diese Domain kaufen").
-  # Returns a JS spinner with no real content.
+  # mittelaltermarkt.com — domain listed for sale (JS spinner, no content).
   - name: "Mittelaltermarkt.com"
     url: "https://www.mittelaltermarkt.com/marktkalender"
     adapter: "mittelaltermarkt"
@@ -58,9 +73,3 @@ sources:
 #   2. Set a unique name, url, and the adapter name.
 #   3. If no dedicated adapter exists, use "generic_table".
 #   4. Restart the app or POST /api/crawl/trigger.
-#
-# Example:
-#   - name: "My Local Event Site"
-#     url: "https://example.org/events"
-#     adapter: "generic_table"
-#     enabled: true
