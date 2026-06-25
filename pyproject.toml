@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ritterradar"
-version = "0.0.31"
+version = "0.0.32"
 description = "Discover German medieval markets, Renaissance festivals, and Viking fairs on an interactive map"
 authors = [{name = "Marcel Petrick", email = "mail@marcelpetrick.it"}]
 license = {text = "GPL-3.0-or-later"}

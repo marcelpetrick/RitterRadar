@@ -203,13 +203,39 @@ def _upsert_market(
     source_name: str,
 ) -> tuple[int, int]:
     with Session(get_engine()) as session:
-        existing = session.exec(
-            select(Market).where(
-                Market.name == mdata.name,
-                Market.start_date == mdata.start_date,
-                Market.source_url == mdata.source_url,
-            )
-        ).first()
+        existing = None
+
+        # Phase 1a — cross-source dedup via postal code (most reliable).
+        if mdata.postal_code:
+            existing = session.exec(
+                select(Market).where(
+                    Market.name == mdata.name,
+                    Market.start_date == mdata.start_date,
+                    Market.postal_code == mdata.postal_code,
+                )
+            ).first()
+
+        # Phase 1b — cross-source dedup via city when no PLZ available.
+        # Catches cases where one source has PLZ and the other doesn't
+        # (e.g. Spectaculum stores city only; Vehi Mercatus adds PLZ later).
+        if existing is None and mdata.city:
+            existing = session.exec(
+                select(Market).where(
+                    Market.name == mdata.name,
+                    Market.start_date == mdata.start_date,
+                    Market.city == mdata.city,
+                )
+            ).first()
+
+        # Phase 2 — same-source re-crawl: match by source URL (existing behaviour).
+        if existing is None:
+            existing = session.exec(
+                select(Market).where(
+                    Market.name == mdata.name,
+                    Market.start_date == mdata.start_date,
+                    Market.source_url == mdata.source_url,
+                )
+            ).first()
 
         now = datetime.now(timezone.utc)
         if existing is None:
@@ -241,17 +267,25 @@ def _upsert_market(
                 session.rollback()
                 return 0, 0
         else:
+            # Enrich existing record with any data the new source adds.
             existing.end_date = mdata.end_date
-            existing.address = mdata.address
-            existing.city = mdata.city
-            existing.postal_code = mdata.postal_code
-            if lat is not None:
+            existing.updated_at = now
+            # Fill in missing location fields
+            if existing.city is None and mdata.city:
+                existing.city = mdata.city
+            if existing.postal_code is None and mdata.postal_code:
+                existing.postal_code = mdata.postal_code
+            if existing.address is None and mdata.address:
+                existing.address = mdata.address
+            # Improve geocoords only when we have new data and existing is absent
+            if lat is not None and existing.latitude is None:
                 existing.latitude = lat
                 existing.longitude = lon
                 existing.geocode_uncertain = uncertain
-            existing.program_text = mdata.program_text
-            existing.original_text = mdata.original_text
-            existing.updated_at = now
+            if mdata.program_text:
+                existing.program_text = mdata.program_text
+            if mdata.original_text and len(mdata.original_text) > len(existing.original_text or ""):
+                existing.original_text = mdata.original_text
             session.add(existing)
             session.commit()
             return 0, 1
