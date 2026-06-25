@@ -8,6 +8,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+VENV="${PROJECT_ROOT}/.venv"
 
 if [[ -f "${PROJECT_ROOT}/.env" ]]; then
     set -a
@@ -15,6 +16,9 @@ if [[ -f "${PROJECT_ROOT}/.env" ]]; then
     source "${PROJECT_ROOT}/.env"
     set +a
 fi
+
+ALEMBIC="${VENV}/bin/alembic"
+[[ -x "${ALEMBIC}" ]] || ALEMBIC="alembic"
 
 DB_PATH="${RITTERRADAR_DB_PATH:-${PROJECT_ROOT}/data/ritterradar.db}"
 
@@ -34,5 +38,5 @@ fi
 mkdir -p "$(dirname "${DB_PATH}")"
 echo "==> Running migrations to recreate schema..."
 cd "${PROJECT_ROOT}"
-alembic upgrade head
+"${ALEMBIC}" upgrade head
 echo "==> Database reset complete."
