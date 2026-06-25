@@ -20,7 +20,7 @@ from ritterradar.crawler.registry import register
 
 logger = logging.getLogger(__name__)
 
-BASE = "https://www.schwerttanz.de"
+BASE = "https://schwerttanz.de"
 POSTAL_RE = re.compile(r"\b(\d{5})\b")
 CITY_RE = re.compile(r"\b(\d{5})\s+([A-ZÄÖÜ][a-zäöüß\-]+(?:\s+[A-ZÄÖÜ][a-zäöüß\-]+)*)")
 

@@ -47,10 +47,22 @@ class MittelaltermarktAdapter(AbstractCrawlerAdapter):
                 break
 
             soup = BeautifulSoup(response.text, "lxml")
+
+            # Try progressively wider selectors
             items = (
-                soup.find_all(class_=re.compile(r"event|markt|eintrag|post", re.I))
+                soup.find_all(class_=re.compile(r"event|markt|eintrag|post|veranstaltung|termin|entry", re.I))
                 or soup.find_all("article")
+                or soup.find_all("tr")[1:]  # table-based calendars
+                or soup.find_all("li", class_=True)
             )
+
+            if not items and page == 1:
+                title = soup.title.get_text(strip=True) if soup.title else "(no title)"
+                snippet = soup.get_text(separator=" ", strip=True)[:500]
+                logger.debug(
+                    "%s: no items found on page 1. title=%r snippet=%r",
+                    self.SOURCE_NAME, title, snippet,
+                )
 
             page_count = 0
             for item in items:

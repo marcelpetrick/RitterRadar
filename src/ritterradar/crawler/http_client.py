@@ -10,6 +10,7 @@
 import asyncio
 import logging
 import random
+from urllib.parse import urlparse
 
 import httpx
 
@@ -22,10 +23,16 @@ _BACKOFF_BASE = 2.0
 _BACKOFF_MAX = 60.0
 _TIMEOUT = 30.0
 
+# Realistic browser UA — many sites block non-browser strings outright
 _USER_AGENT = (
-    "RitterRadar/0.0 (German medieval market finder; "
-    "https://github.com/mpetrick/RitterRadar)"
+    "Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0"
 )
+
+
+def _domain_root(host: str) -> str:
+    """Return the eTLD+1 of a hostname (e.g. 'sedo.com' from 'www.sedo.com')."""
+    parts = host.lower().rstrip(".").split(".")
+    return ".".join(parts[-2:]) if len(parts) >= 2 else host
 
 
 class PoliteHttpClient:
@@ -63,6 +70,16 @@ class PoliteHttpClient:
                     follow_redirects=True,
                     **kwargs,  # type: ignore[arg-type]
                 )
+                # Detect domain parking: if we end up on a completely different
+                # domain the original site is probably expired / redirected away.
+                req_root = _domain_root(urlparse(url).hostname or "")
+                resp_root = _domain_root(str(response.url.host))
+                if req_root and resp_root and req_root != resp_root:
+                    raise httpx.RequestError(
+                        f"Domain drift: requested {url!r} but landed on"
+                        f" {str(response.url)!r} — parked or hijacked domain"
+                    )
+
                 if response.status_code in (429, 503) and attempt < self._max_retries:
                     backoff = min(_BACKOFF_BASE**attempt, _BACKOFF_MAX)
                     logger.warning(
@@ -99,10 +116,16 @@ class PoliteHttpClient:
         await asyncio.sleep(delay)
 
 
-def make_client() -> httpx.AsyncClient:
+def make_client(verify: bool = True) -> httpx.AsyncClient:
     """Create an httpx.AsyncClient with sensible defaults."""
     return httpx.AsyncClient(
-        headers={"User-Agent": _USER_AGENT},
+        headers={
+            "User-Agent": _USER_AGENT,
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "de-DE,de;q=0.9,en;q=0.5",
+            "Accept-Encoding": "gzip, deflate, br",
+        },
         timeout=_TIMEOUT,
         follow_redirects=True,
+        verify=verify,
     )

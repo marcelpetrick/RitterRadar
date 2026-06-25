@@ -11,10 +11,11 @@
 #   crawl_interval_hours:  Minimum hours between re-crawls (default: 24)
 
 sources:
+  # ── DISABLED — domain expired 2026, now parked on Sedo ──────────────
   - name: "Mittelalterfeste.de"
     url: "https://www.mittelalterfeste.de/termine"
     adapter: "mittelalterfeste"
-    enabled: true
+    enabled: false
     crawl_interval_hours: 24
 
   - name: "Spectaculum.de"
@@ -23,14 +24,16 @@ sources:
     enabled: true
     crawl_interval_hours: 24
 
+  # ── SSL cert covers apex domain only (no www.) ───────────────────────
   - name: "Schwerttanz Marktkalender"
-    url: "https://www.schwerttanz.de/marktkalender"
+    url: "https://schwerttanz.de/marktkalender"
     adapter: "schwerttanz"
     enabled: true
     crawl_interval_hours: 24
 
+  # ── SSL cert covers apex domain only (no www.) ───────────────────────
   - name: "Ritterschaft.de"
-    url: "https://www.ritterschaft.de/termine"
+    url: "https://ritterschaft.de/termine"
     adapter: "ritterschaft"
     enabled: true
     crawl_interval_hours: 24
