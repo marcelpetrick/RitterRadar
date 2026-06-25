@@ -4,6 +4,7 @@
 
 from ritterradar.crawler.adapters import (  # noqa: F401
     generic_table,
+    marktkalendarium,
     mittelalterfeste,
     mittelalterkalender_info,
     mittelaltermarkt,

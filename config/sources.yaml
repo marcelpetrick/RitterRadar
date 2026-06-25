@@ -38,6 +38,15 @@ sources:
     enabled: true
     crawl_interval_hours: 24
 
+  # Pfalzis Marktkalendarium — classic hand-curated calendar (since 2000+).
+  # 334 rows for 2026, 301 in Germany (D-). URL: /maerkte{YEAR}.php.
+  # Cols: start | end | name | "D-XXXXX City" | venue | website | contact.
+  - name: "Pfalzis Marktkalendarium"
+    url: "https://marktkalendarium.de"
+    adapter: "marktkalendarium"
+    enabled: true
+    crawl_interval_hours: 24
+
   # ── DISABLED — investigate before re-enabling ─────────────────────────
 
   # mittelalterfeste.de — domain expired, now parked on Sedo (sedo.com).
