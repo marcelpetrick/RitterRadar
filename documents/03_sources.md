@@ -1,6 +1,6 @@
 # RitterRadar — Crawler Sources Documentation
 
-Last verified: 2026-06-25
+Last verified: 2026-06-25 · 5 active sources · 4 disabled
 
 ---
 
@@ -103,6 +103,102 @@ Adapter uses regex `(\d{1,2})\.(\d{2})\.\s*[+\-–]\s*(\d{1,2})\.(\d{2})\.(\d{4}
 
 ---
 
+### 4. Pfalzis Marktkalendarium
+
+| Property | Value |
+|---|---|
+| **Adapter** | `marktkalendarium` · `__version__ = "0.1.0"` |
+| **Base URL** | https://marktkalendarium.de |
+| **List URL** | `/maerkte{YEAR}.php` |
+| **Events/year** | ~334 (2026), 8 (2027 early entries) |
+| **Coverage** | Germany (301), Switzerland (11), Austria (10), others (12) |
+| **Update frequency** | Hand-curated, new entries added continuously |
+
+**Page structure:**  
+Plain HTML table rows — no class selector needed, select by date content:
+
+```
+[0] <td> start date "D.M.YYYY" or "DD.MM.YYYY" (no leading zeros!)
+[1] <td> end date (same format)
+[2] <td> event name (plain text)
+[3] <td> <a href="maps.google.de/...?q=D-XXXXX City">D-55232 Alzey</a>
+[4] <td> venue / location detail (e.g. "Innenstadt", "Schlossgarten")
+[5] <td> <a href="URL">Event website name</a>
+[6] <td> optional second link or email contact
+```
+
+**Country prefix mapping:**
+
+| Prefix | ISO | Example |
+|---|---|---|
+| `D-` | DE | `D-55232 Alzey` |
+| `A-` | AT | `A-1010 Wien` |
+| `CH-` | CH | `CH-8001 Zürich` |
+| `L-` | LU | `L-1234 Luxembourg` |
+
+**Known quirks:**
+- Date format uses variable width: `"6.6.2026"` not `"06.06.2026"` — parse with regex `(\d{1,2})\.(\d{1,2})\.(\d{4})`.
+- Row count fluctuates; all rows with a date in any TD are event rows.
+- Source URL extracted from first `<a href>` in TD[5] that is not a Google Maps link.
+- Some entries use `"d-"` (lowercase) prefix — normalise before lookup.
+
+---
+
+### 5. Mittelaltermarkt.online
+
+| Property | Value |
+|---|---|
+| **Adapter** | `mittelaltermarkt_online` · `__version__ = "0.1.0"` |
+| **Base URL** | https://mittelaltermarkt.online |
+| **API URL** | `/wp-json/tribe/events/v1/events` (The Events Calendar plugin) |
+| **Events/year** | 531 (2026-2027: 491 DE + 29 AT + 9 CH) |
+| **Coverage** | Germany, Austria, Switzerland |
+| **Update frequency** | Community-submitted, regularly updated |
+
+**Access method: REST API (no HTML scraping)**
+
+```
+GET /wp-json/tribe/events/v1/events?per_page=100&status=publish&start_date=YYYY-01-01&end_date=YYYY+1-12-31&page=N
+```
+
+Response JSON:
+```json
+{
+  "events": [...],
+  "total": 531,
+  "total_pages": 11,
+  "next_rest_url": "..."
+}
+```
+
+Event fields used:
+```
+title          → name (HTML-unescaped — WP encodes "–" as &#8211;)
+start_date     → "YYYY-MM-DD HH:MM:SS"
+end_date       → "YYYY-MM-DD HH:MM:SS"
+url            → source_url (canonical event page)
+categories[].slug → market_type (see table below)
+venue.city     → city
+venue.zip      → postal_code
+venue.country  → country ("Deutschland" → "DE")
+venue.geo_lat  → latitude (pre-geocoded, skips Nominatim)
+venue.geo_lng  → longitude (pre-geocoded, skips Nominatim)
+```
+
+**Category → market_type mapping:**
+
+| Slug | market_type |
+|---|---|
+| `mittelalterspektakel`, `mittelaltermaerkten`, `mittelalterfeste`, `ritterturniere`, `historische-feste`, `andere-veranstaltungen` | `medieval` |
+| `weihnachtsmaerkte` | `christmas` |
+| `wikingerspektakel` | `viking` |
+| `renaissance-*` | `renaissance` |
+| `fantasy-*` | `fantasy` |
+
+**Key advantage:** 528/531 events have pre-geocoded `venue.geo_lat` / `venue.geo_lng` — the worker skips Nominatim for these, saving ~528 API calls per crawl cycle.
+
+---
+
 ## Disabled Sources (Investigation Required)
 
 | Source | URL | Reason disabled |
@@ -129,8 +225,10 @@ config/sources.yaml
         │
         │  1. Load CrawlJob + Source from DB
         │  2. Instantiate adapter via registry.get_adapter(source.adapter_name)
-        │  3. Run adapter.crawl(PoliteHttpClient)
-        │  4. Geocode each result via Nominatim (SQLite cache, 1.1s rate limit)
+        │  3. Run adapter.crawl(PoliteHttpClient) → list[MarketData]
+        │  4. For each MarketData:
+        │       if mdata.latitude is set → use directly (skip Nominatim)
+        │       else → geocode via Nominatim (SQLite cache, 1.1s rate limit)
         │  5. Upsert Market rows (UniqueConstraint: name+start_date+source_url)
         │  6. Mark CrawlJob completed/failed
         ▼
@@ -170,7 +268,20 @@ print('Text:', soup.get_text(strip=True)[:500])
 
 ### Step 2 — Write the adapter
 
-Create `src/ritterradar/crawler/adapters/mysite.py`.  
+Create `src/ritterradar/crawler/adapters/mysite.py`.
+
+Every adapter must include version and verification metadata at the top:
+
+```python
+__version__ = "0.1.0"          # start here; bump when parsing logic changes
+_VERIFIED_DATE = "YYYY-MM-DD"  # last date you confirmed the site structure is correct
+```
+
+Adapter versioning uses SemVer:
+- **patch** bump (`0.1.x`): minor fixes, whitespace/regex tuning
+- **minor** bump (`0.x.0`): structural change in how the site is parsed
+- **major** bump (`x.0.0`): completely new page structure (site redesign)
+
 See `docs/source/adapter_guide.rst` for the full annotated example.
 
 ### Step 3 — Register the adapter
