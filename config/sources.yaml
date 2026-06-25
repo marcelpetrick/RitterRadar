@@ -1,0 +1,55 @@
+# RitterRadar — Source Configuration
+# ===================================
+# Add or remove sources here without changing application code.
+# Restart the app (or POST /api/crawl/trigger) to pick up changes.
+#
+# Fields:
+#   name:                  Human-readable identifier (must be unique)
+#   url:                   Base URL that the adapter will scrape
+#   adapter:               Adapter name registered in the crawler registry
+#   enabled:               Set to false to skip this source
+#   crawl_interval_hours:  Minimum hours between re-crawls (default: 24)
+
+sources:
+  - name: "Mittelalterfeste.de"
+    url: "https://www.mittelalterfeste.de/termine"
+    adapter: "mittelalterfeste"
+    enabled: true
+    crawl_interval_hours: 24
+
+  - name: "Spectaculum.de"
+    url: "https://www.spectaculum.de/termine"
+    adapter: "spectaculum"
+    enabled: true
+    crawl_interval_hours: 24
+
+  - name: "Schwerttanz Marktkalender"
+    url: "https://www.schwerttanz.de/marktkalender"
+    adapter: "schwerttanz"
+    enabled: true
+    crawl_interval_hours: 24
+
+  - name: "Ritterschaft.de"
+    url: "https://www.ritterschaft.de/termine"
+    adapter: "ritterschaft"
+    enabled: true
+    crawl_interval_hours: 24
+
+  - name: "Mittelaltermarkt.com"
+    url: "https://www.mittelaltermarkt.com/marktkalender"
+    adapter: "mittelaltermarkt"
+    enabled: true
+    crawl_interval_hours: 24
+
+# --- Additional sources (add your own below) ---
+# To add a new source:
+#   1. Copy one of the entries above.
+#   2. Change name, url, and adapter.
+#   3. If no dedicated adapter exists, use "generic_table".
+#   4. Restart the app.
+#
+# Example:
+#   - name: "My Local Event Site"
+#     url: "https://example.org/events"
+#     adapter: "generic_table"
+#     enabled: true
