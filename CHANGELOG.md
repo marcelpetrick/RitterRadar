@@ -8,6 +8,51 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.0.32] — 2026-06-26
+### Fixed
+- **Cross-source duplicate markets eliminated** — three-phase upsert in `worker.py`:
+  1. Match by `(name, start_date, postal_code)` — prevents the same real event from being
+     inserted from 5 different sources (e.g. "Glanz der Ritterzeit" was stored 3×)
+  2. Match by `(name, start_date, city)` — catches sources that omit PLZ (Spectaculum.de)
+  3. Fallback to `(name, start_date, source_url)` — original same-source re-crawl logic
+- On dupe match: enrich existing record (fill missing city/PLZ/geocoords) instead of skipping
+- Retroactively cleaned 114 duplicate rows (1971 → 1859 markets)
+
+## [0.0.31] — 2026-06-26
+### Docs
+- `documents/03_sources.md`: added source entries for marktkalendarium.de and mittelaltermarkt.online
+- Crawler architecture diagram updated: pre-geocoded lat/lon fast path shown
+- Adapter versioning guide added (SemVer semantics for `__version__` / `_VERIFIED_DATE`)
+
+## [0.0.30] — 2026-06-26
+### Added
+- **New adapter: mittelaltermarkt.online** (v0.1.0, verified 2026-06-25)
+  - Uses The Events Calendar REST API (`/wp-json/tribe/events/v1/events`) — no HTML scraping
+  - 531 events (2026-2027): 491 DE + 29 AT + 9 CH
+  - 528/531 events carry pre-geocoded `venue.geo_lat` / `venue.geo_lng` → Nominatim skipped
+  - Category-slug → market_type mapping (christmas/viking/renaissance/fantasy/medieval)
+  - HTML entity unescape (`&#8211;` → `–`)
+- `MarketData` dataclass: optional `latitude`/`longitude` fields for pre-geocoded data
+- `CrawlWorker`: short-circuits Nominatim when `mdata.latitude` is already set
+
+## [0.0.29] — 2026-06-26
+### Added
+- **New adapter: marktkalendarium.de** (Pfalzis Marktkalendarium, v0.1.0, verified 2026-06-25)
+  - 334 events for 2026, 8 for 2027; 311 DE + 10 AT + 11 CH
+  - 7-column HTML table; variable-width date format `D.M.YYYY`; country prefix map D-/A-/CH-/L-
+
+## [0.0.28] — 2026-06-26
+### Changed
+- **Logging**: `force=True` in `basicConfig` so RitterRadar config wins over uvicorn; name column widened to 40 chars; httpx/httpcore/geopy/urllib3 suppressed to WARNING
+- **Adapter versioning**: all 3 existing adapters gain `__version__ = "0.1.0"` and `_VERIFIED_DATE = "2026-06-25"`
+- **Dependencies**: all runtime and dev dependencies verified at latest stable versions — no changes required
+  (fastapi 0.138.1, uvicorn 0.49.0, sqlmodel 0.0.39, httpx 0.28.1, lxml 6.1.1, etc.)
+
+## [0.0.27] — 2026-06-25
+### Docs
+- `docs/architecture.md` rewritten with 8 Mermaid diagrams (C4 L1–L3, ER diagram, module graph, HTTP client flow, active sources, directory layout)
+- Replaces all ASCII art diagrams
+
 ## [0.0.19] — 2026-06-25
 ### Changed
 - Version bumped to 0.0.19 (synchronises pyproject.toml with commit count)

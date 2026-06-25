@@ -229,11 +229,34 @@ config/sources.yaml
         │  4. For each MarketData:
         │       if mdata.latitude is set → use directly (skip Nominatim)
         │       else → geocode via Nominatim (SQLite cache, 1.1s rate limit)
-        │  5. Upsert Market rows (UniqueConstraint: name+start_date+source_url)
+        │  5. Three-phase dedup upsert (see below)
         │  6. Mark CrawlJob completed/failed
         ▼
   SQLite database (data/ritterradar.db)
 ```
+
+### Three-Phase Dedup Upsert
+
+Because the same real-world event appears on multiple source websites with
+different URLs, a simple `(name, start_date, source_url)` key was insufficient
+— it led to 3× duplicates for popular events.
+
+The worker now checks in order:
+
+| Phase | Key | Purpose |
+|---|---|---|
+| 1a | `name + start_date + postal_code` | Cross-source dedup (PLZ) — primary |
+| 1b | `name + start_date + city` | Cross-source dedup (city) — for sources that omit PLZ |
+| 2  | `name + start_date + source_url` | Same-source re-crawl detection |
+
+When phases 1a or 1b find an existing row, the record is **enriched** rather than duplicated:
+- Fills in missing `city`, `postal_code`, `address`
+- Improves geocoords when existing row has `latitude = NULL`
+- Updates `end_date` and `original_text` if new data is richer
+
+Correctly **kept separate**: events that share a generic name (e.g., "Mittelaltermarkt")
+but are at different locations on the same date — these have distinct postal codes and
+are genuinely different events.
 
 ### PoliteHttpClient behaviour
 

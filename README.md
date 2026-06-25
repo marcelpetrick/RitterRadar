@@ -8,10 +8,7 @@ locations, and displays results on a Leaflet/OpenStreetMap map with medieval
 visual styling.  Everything runs locally — no cloud, no accounts, no data
 leaves your machine.
 
-**Author: Marcel Petrick <mail@marcelpetrick.it>**
-
-**Note: projected is generated with AI.**
-
+**Author: Marcel Petrick <mail@marcelpetrick.it>**  
 **License: GPLv3 or later. See `LICENSE`.**
 
 ### current state web UI
@@ -24,8 +21,10 @@ leaves your machine.
 | Feature | Description |
 |---|---|
 | **Auto-crawling** | Background workers harvest events from all configured sources on startup |
-| **5 adapters** | mittelalterfeste.de, spectaculum.de, schwerttanz.de, ritterschaft.de, mittelaltermarkt.com |
-| **Extensible** | Generic table adapter + guide for adding any new site |
+| **5 active adapters** | mittelalterkalender.info, vehi-mercatus.de, spectaculum.de, marktkalendarium.de, mittelaltermarkt.online |
+| **REST API adapter** | mittelaltermarkt.online uses WordPress Events Calendar JSON API — no HTML scraping |
+| **Deduplication** | Three-phase upsert (PLZ → city → source_url) merges the same event from multiple sources into one record |
+| **Extensible** | Generic table adapter + guide for adding any new site; each adapter carries its own SemVer |
 | **Geocoding** | Nominatim (OpenStreetMap) with SQLite cache and rate-limit compliance |
 | **Distance filter** | Haversine straight-line distance from your home pin |
 | **Time filter** | Month-range slider covering current month through next 12 months |
@@ -191,11 +190,15 @@ automatically.  It works on many sites without any code change.
 1. Create `src/ritterradar/crawler/adapters/mysite.py`:
 
 ```python
+# SPDX-License-Identifier: GPL-3.0-or-later
 from ritterradar.crawler.base_adapter import AbstractCrawlerAdapter, MarketData
-from ritterradar.crawler.date_parser import parse_date_range
 from ritterradar.crawler.http_client import PoliteHttpClient
 from ritterradar.crawler.registry import register
 from bs4 import BeautifulSoup
+from datetime import date
+
+__version__ = "0.1.0"          # bump when parsing logic changes
+_VERIFIED_DATE = "YYYY-MM-DD"  # last date you confirmed the page structure
 
 @register("mysite")
 class MySiteAdapter(AbstractCrawlerAdapter):
@@ -208,11 +211,16 @@ class MySiteAdapter(AbstractCrawlerAdapter):
         soup = BeautifulSoup(response.text, "lxml")
         results = []
         for article in soup.find_all("article", class_="event"):
-            name  = article.find("h2").get_text(strip=True)
-            dates = parse_date_range(article.find(class_="date").get_text())
-            if dates:
-                results.append(MarketData(name=name, start_date=dates[0],
-                                          end_date=dates[1], source_url=self.BASE_URL))
+            name = article.find("h2").get_text(strip=True)
+            # parse start/end dates from the article, set city/postal_code for dedup
+            results.append(MarketData(
+                name=name,
+                start_date=date(2026, 7, 1),   # replace with real parsing
+                end_date=date(2026, 7, 3),
+                city="Berlin",
+                postal_code="10115",
+                source_url=self.BASE_URL,
+            ))
         return results
 ```
 
