@@ -4,8 +4,11 @@
  * Copyright (C) 2026 Marcel Petrick <mail@marcelpetrick.it>
  */
 import { fetchAndRender } from './filters.js';
+import { appLog } from './activity-log.js';
 
 const STATUS_POLL_MS = 4_000;
+let _prevCompleted = -1;
+let _prevFailed = -1;
 
 function setBadge(id, count, label) {
   const el = document.getElementById(id);
@@ -42,6 +45,28 @@ async function pollStatus() {
     setBadge('status-failed',    data.failed    ?? 0, 'Fehler');
 
     renderJobsPanel(data.recent_jobs ?? []);
+
+    // Log transitions
+    const completed = data.completed ?? 0;
+    const failed    = data.failed ?? 0;
+    if (_prevCompleted >= 0 && completed > _prevCompleted) {
+      // Find newly completed jobs
+      const newJobs = (data.recent_jobs ?? []).slice(0, completed - _prevCompleted);
+      newJobs.forEach(j => {
+        if (j.status === 'completed') {
+          appLog('info', `Crawler fertig: ${j.source_name} — ${j.events_discovered ?? 0} Funde, ${j.events_inserted ?? 0} neu`);
+        }
+      });
+      fetchAndRender();
+    }
+    if (_prevFailed >= 0 && failed > _prevFailed) {
+      const failedJobs = (data.recent_jobs ?? []).filter(j => j.status === 'failed');
+      failedJobs.slice(0, failed - _prevFailed).forEach(j => {
+        appLog('error', `Crawler-Fehler: ${j.source_name} — ${j.error_message || 'unbekannt'}`);
+      });
+    }
+    _prevCompleted = completed;
+    _prevFailed    = failed;
   } catch (_) { /* ignore network errors */ }
 }
 
@@ -51,14 +76,19 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const r = await fetch('/api/crawl/trigger', { method: 'POST' });
       const data = await r.json();
-      alert(`${data.enqueued ?? 0} Quellen zur Neuindizierung eingereiht.`);
-    } catch (_) { /* ignore */ }
+      appLog('info', `Crawl gestartet: ${data.enqueued ?? 0} Quellen eingereiht`);
+    } catch (err) {
+      appLog('error', `Crawl konnte nicht gestartet werden: ${err.message}`);
+    }
   });
 
-  // Toggle jobs panel
+  // Toggle jobs panel (starts open)
   const jobsPanel = document.getElementById('jobs-panel');
-  document.getElementById('btn-toggle-jobs')?.addEventListener('click', () => {
+  const toggleBtn = document.getElementById('btn-toggle-jobs');
+  toggleBtn?.addEventListener('click', () => {
+    const isOpen = !jobsPanel?.classList.contains('hidden');
     jobsPanel?.classList.toggle('hidden');
+    if (toggleBtn) toggleBtn.textContent = isOpen ? 'Jobs ▾' : 'Jobs ▲';
   });
 
   // Listen for hide-market events to re-fetch markers

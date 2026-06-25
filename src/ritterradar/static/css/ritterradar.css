@@ -665,6 +665,79 @@ input[type="range"]::-moz-range-thumb {
 .leaflet-popup-content b { color: var(--gold-light); }
 
 /* ═══════════════════════════════════════════════════════════
+   Activity Log panel (bottom-right of map area)
+   ═══════════════════════════════════════════════════════════ */
+#activity-log {
+  position: absolute;
+  bottom: 50px; /* above status bar */
+  right: 12px;
+  width: 340px;
+  background: rgba(26, 13, 4, 0.92);
+  border: 1px solid var(--gold-dim);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  z-index: 870;
+  font-size: 0.78rem;
+  backdrop-filter: blur(4px);
+  transition: box-shadow 0.3s;
+}
+#activity-log.log-flash {
+  box-shadow: 0 0 14px rgba(197,160,40,0.6);
+}
+
+.log-header {
+  display: flex;
+  align-items: center;
+  padding: 0.3rem 0.5rem;
+  border-bottom: 1px solid var(--gold-dim);
+  gap: 0.3rem;
+}
+.log-title {
+  flex: 1;
+  color: var(--gold);
+  font-family: var(--font-heading);
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+}
+.log-btn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0 0.3rem;
+  font-size: 0.75rem;
+  line-height: 1;
+  transition: color var(--transition);
+}
+.log-btn:hover { color: var(--gold); }
+
+#log-body {
+  max-height: 200px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--gold-dim) transparent;
+}
+#log-list {
+  padding: 0.3rem 0;
+}
+
+.log-entry {
+  display: grid;
+  grid-template-columns: 60px 1fr;
+  gap: 0 0.4rem;
+  padding: 0.18rem 0.5rem;
+  border-bottom: 1px solid rgba(197,160,40,0.06);
+  line-height: 1.35;
+}
+.log-entry:last-child { border-bottom: none; }
+.log-ts   { color: var(--text-muted); font-size: 0.72rem; padding-top: 1px; }
+.log-msg  { color: var(--text-light); }
+.log-info  .log-msg { color: var(--text-light); }
+.log-warn  .log-msg { color: #cccc44; }
+.log-error .log-msg { color: #cc5555; }
+.log-empty { display: block; padding: 0.4rem 0.5rem; color: var(--text-muted); }
+
+/* ═══════════════════════════════════════════════════════════
    Utilities
    ═══════════════════════════════════════════════════════════ */
 .hidden { display: none !important; }

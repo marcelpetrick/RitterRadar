@@ -4,6 +4,9 @@
  * Copyright (C) 2026 Marcel Petrick <mail@marcelpetrick.it>
  */
 import { renderMarkers, setHomePin, flyTo } from './map.js';
+import { appLog } from './activity-log.js';
+
+function _log(level, msg) { appLog(level, msg); }
 
 // ── Month selector initialisation ──────────────────────────
 const MONTH_NAMES = [
@@ -70,7 +73,7 @@ async function loadSettings() {
   } catch (_) { /* non-fatal */ }
 }
 
-export async function fetchAndRender() {
+export async function fetchAndRender(silent = false) {
   const { dateFrom, dateTo, radiusKm, types } = getFilters();
   const params = new URLSearchParams();
   if (dateFrom)              params.set('date_from', dateFrom);
@@ -84,10 +87,13 @@ export async function fetchAndRender() {
 
   try {
     const r = await fetch(`/api/markets?${params}`);
-    if (!r.ok) return;
+    if (!r.ok) { if (!silent) _log('error', `Marktdaten: Serverfehler ${r.status}`); return; }
     const markets = await r.json();
     renderMarkers(markets);
-  } catch (_) { /* network error — silently skip */ }
+    if (!silent) _log('info', `${markets.length} Märkte geladen`);
+  } catch (err) {
+    if (!silent) _log('error', `Marktdaten konnten nicht geladen werden: ${err.message}`);
+  }
 }
 
 // ── Home geocoding ──────────────────────────────────────────
@@ -97,6 +103,7 @@ async function geocodeHome(query) {
 
   statusEl?.classList.remove('hidden', 'ok', 'err');
   statusEl && (statusEl.textContent = 'Suche…');
+  _log('info', `Ortssuche: „${query}"…`);
 
   try {
     const r = await fetch(`/api/settings/geocode?q=${encodeURIComponent(query)}`);
@@ -104,6 +111,7 @@ async function geocodeHome(query) {
     if (!data.found) {
       statusEl?.classList.add('err');
       statusEl && (statusEl.textContent = 'Ort nicht gefunden.');
+      _log('warn', `Ort nicht gefunden: „${query}"`);
       return;
     }
     homeCoords = { lat: data.latitude, lon: data.longitude };
@@ -121,12 +129,20 @@ async function geocodeHome(query) {
       }),
     });
 
-    statusEl?.classList.add('ok');
-    statusEl && (statusEl.textContent = data.uncertain ? '⚠ Ungefährer Ort' : '✓ ' + data.display_name);
+    if (data.uncertain) {
+      statusEl?.classList.add('ok');
+      statusEl && (statusEl.textContent = '⚠ Ungefährer Ort: ' + data.display_name);
+      _log('warn', `Ungefährer Ort gefunden: ${data.display_name}`);
+    } else {
+      statusEl?.classList.add('ok');
+      statusEl && (statusEl.textContent = '✓ ' + data.display_name);
+      _log('info', `Heimatort gesetzt: ${data.display_name}`);
+    }
     await fetchAndRender();
-  } catch (_) {
+  } catch (err) {
     statusEl?.classList.add('err');
     statusEl && (statusEl.textContent = 'Fehler bei der Suche.');
+    _log('error', `Geocoding fehlgeschlagen: ${err.message}`);
   }
 }
 
@@ -144,10 +160,16 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Apply button
-  document.getElementById('btn-apply')?.addEventListener('click', fetchAndRender);
+  document.getElementById('btn-apply')?.addEventListener('click', () => {
+    _log('info', 'Filter angewendet, Karte wird aktualisiert…');
+    fetchAndRender();
+  });
 
   // Refresh button in header
-  document.getElementById('btn-refresh')?.addEventListener('click', fetchAndRender);
+  document.getElementById('btn-refresh')?.addEventListener('click', () => {
+    _log('info', 'Manuelle Aktualisierung…');
+    fetchAndRender();
+  });
 
   // Geocode button
   document.getElementById('btn-geocode')?.addEventListener('click', () => {
@@ -160,6 +182,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (e.key === 'Enter') geocodeHome(e.target.value);
   });
 
-  // Auto-refresh every 8 seconds
-  setInterval(fetchAndRender, 8_000);
+  // Auto-refresh every 8 seconds (silent — no log spam)
+  setInterval(() => fetchAndRender(true), 8_000);
 });

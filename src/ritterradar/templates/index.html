@@ -112,19 +112,32 @@
     </div>
     <div class="status-actions">
       <button id="btn-trigger-crawl" class="btn-sm btn-ghost">⟳ Neu laden</button>
-      <button id="btn-toggle-jobs" class="btn-sm btn-ghost">Jobs ▾</button>
+      <button id="btn-toggle-jobs" class="btn-sm btn-ghost">Jobs ▲</button>
     </div>
   </footer>
 
   <!-- ═══════════════════════ JOBS PANEL ═══════════════════════ -->
-  <div id="jobs-panel" class="hidden">
+  <div id="jobs-panel">
     <div id="jobs-list"></div>
+  </div>
+
+  <!-- ═══════════════════════ ACTIVITY LOG ════════════════════════ -->
+  <div id="activity-log">
+    <div class="log-header">
+      <span class="log-title">⚙ Aktivitätslog</span>
+      <button id="log-clear" class="log-btn" title="Log leeren">✕</button>
+      <button id="log-toggle" class="log-btn" title="Ein-/Ausklappen">▼</button>
+    </div>
+    <div id="log-body">
+      <div id="log-list"></div>
+    </div>
   </div>
 
 </div><!-- /app -->
 {% endblock %}
 
 {% block scripts %}
+<script src="/static/js/activity-log.js" type="module"></script>
 <script src="/static/js/map.js" type="module"></script>
 <script src="/static/js/filters.js" type="module"></script>
 <script src="/static/js/detail-panel.js" type="module"></script>

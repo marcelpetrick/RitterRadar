@@ -3,13 +3,14 @@
  * SPDX-License-Identifier: GPL-3.0-or-later
  * Copyright (C) 2026 Marcel Petrick <mail@marcelpetrick.it>
  */
+function _log(level, msg) {
+  window.dispatchEvent(new CustomEvent('rr-log', { detail: { level, msg } }));
+}
 
-// Tile layer: CartoDB Voyager (clean, slightly warm style)
-const TILE_URL =
-  'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png';
+// Tile layer: OpenStreetMap standard tiles
+const TILE_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
 const TILE_ATTRIBUTION =
-  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; ' +
-  '<a href="https://carto.com/attributions">CARTO</a>';
+  '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
 // Colours per market type (must match CSS)
 const TYPE_COLORS = {
@@ -36,12 +37,13 @@ export function initMap() {
   L.tileLayer(TILE_URL, {
     attribution: TILE_ATTRIBUTION,
     maxZoom: 19,
-    subdomains: 'abcd',
+    subdomains: 'abc',
   }).addTo(map);
 
   markersLayer = L.layerGroup().addTo(map);
 
   document.getElementById('map-loading')?.classList.add('hidden');
+  _log('info', 'Karte geladen (OpenStreetMap)');
 }
 
 export function renderMarkers(markets) {
@@ -130,5 +132,11 @@ function escHtml(str) {
     .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
-// Initialise on load
-initMap();
+// Initialise on load — wrap so a missing Leaflet build shows a clear error overlay
+try {
+  initMap();
+} catch (err) {
+  const overlay = document.getElementById('map-loading');
+  if (overlay) overlay.innerHTML = `<p style="color:#cc4444;padding:1rem">Karte konnte nicht initialisiert werden:<br><code>${err}</code></p>`;
+  console.error('RitterRadar map init failed:', err);
+}
