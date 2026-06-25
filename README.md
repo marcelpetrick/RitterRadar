@@ -14,7 +14,8 @@ leaves your machine.
 
 **License: GPLv3 or later. See `LICENSE`.**
 
-![map screenshot placeholder](docs/screenshot-placeholder.png)
+### current state web UI
+![](media/currentStateWebUi.png)
 
 ---
 
