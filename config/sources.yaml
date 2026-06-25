@@ -11,45 +11,53 @@
 #   crawl_interval_hours:  Minimum hours between re-crawls (default: 24)
 
 sources:
-  # ── DISABLED — domain expired 2026, now parked on Sedo ──────────────
-  - name: "Mittelalterfeste.de"
-    url: "https://www.mittelalterfeste.de/termine"
-    adapter: "mittelalterfeste"
-    enabled: false
-    crawl_interval_hours: 24
-
+  # ── ACTIVE ────────────────────────────────────────────────────────────
+  # MPS Mittelalterlich Phantasie Spectaculum.
+  # NOTE: /termine returns 403. Homepage lists all upcoming events in the
+  # nav so the adapter scrapes the homepage directly.
   - name: "Spectaculum.de"
-    url: "https://www.spectaculum.de/termine"
+    url: "https://www.spectaculum.de"
     adapter: "spectaculum"
     enabled: true
     crawl_interval_hours: 24
 
-  # ── SSL cert covers apex domain only (no www.) ───────────────────────
+  # ── DISABLED — investigate before re-enabling ─────────────────────────
+
+  # mittelalterfeste.de — domain expired, now parked on Sedo (sedo.com).
+  # Redirect: GET /termine → 303 → sedo.com/search/details/?domain=…
+  - name: "Mittelalterfeste.de"
+    url: "https://www.mittelalterfeste.de/termine"
+    adapter: "mittelalterfeste"
+    enabled: false
+
+  # schwerttanz.de — Schwerttanz Traunstein (folk dance club, not a market
+  # calendar). SSL cert issued for "hypenat-casa-25.netboot.nethost.cz".
+  # /marktkalender returns 404. No relevant event data.
   - name: "Schwerttanz Marktkalender"
-    url: "https://schwerttanz.de/marktkalender"
+    url: "https://www.schwerttanz.de/marktkalender"
     adapter: "schwerttanz"
-    enabled: true
-    crawl_interval_hours: 24
+    enabled: false
 
-  # ── SSL cert covers apex domain only (no www.) ───────────────────────
+  # ritterschaft.de — domain resolves to unrelated droids.de host content.
+  # SSL cert issued for "mx01.droids.de". No relevant event data.
   - name: "Ritterschaft.de"
-    url: "https://ritterschaft.de/termine"
+    url: "https://www.ritterschaft.de/termine"
     adapter: "ritterschaft"
-    enabled: true
-    crawl_interval_hours: 24
+    enabled: false
 
+  # mittelaltermarkt.com — domain listed for sale ("Diese Domain kaufen").
+  # Returns a JS spinner with no real content.
   - name: "Mittelaltermarkt.com"
     url: "https://www.mittelaltermarkt.com/marktkalender"
     adapter: "mittelaltermarkt"
-    enabled: true
-    crawl_interval_hours: 24
+    enabled: false
 
-# --- Additional sources (add your own below) ---
+# --- Add your own sources below ---
 # To add a new source:
-#   1. Copy one of the entries above.
-#   2. Change name, url, and adapter.
+#   1. Copy one of the active entries above.
+#   2. Set a unique name, url, and the adapter name.
 #   3. If no dedicated adapter exists, use "generic_table".
-#   4. Restart the app.
+#   4. Restart the app or POST /api/crawl/trigger.
 #
 # Example:
 #   - name: "My Local Event Site"
