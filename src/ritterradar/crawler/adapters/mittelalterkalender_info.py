@@ -18,6 +18,9 @@ Page structure (verified 2026-06-25):
     [5] Details button (same URL as [2])
 """
 
+__version__ = "0.1.0"
+_VERIFIED_DATE = "2026-06-25"
+
 import logging
 import re
 from datetime import date, datetime

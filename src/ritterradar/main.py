@@ -33,11 +33,16 @@ _TEMPLATES = _BASE / "templates"
 
 def _configure_logging() -> None:
     settings = get_settings()
+    # force=True overrides any root-logger config uvicorn set before us
     logging.basicConfig(
         level=settings.log_level.upper(),
-        format="%(asctime)s %(levelname)-8s %(name)s — %(message)s",
+        format="%(asctime)s %(levelname)-8s %(name)-40s %(message)s",
         datefmt="%H:%M:%S",
+        force=True,
     )
+    # Suppress noisy third-party loggers at WARNING level
+    for noisy in ("httpx", "httpcore", "geopy", "urllib3"):
+        logging.getLogger(noisy).setLevel(logging.WARNING)
 
 
 @asynccontextmanager
