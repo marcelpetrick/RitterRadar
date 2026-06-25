@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}RitterRadar — Mittelalterliche Märkte entdecken{% endblock %}
+
+{% block body %}
+<div id="app">
+
+  <!-- ═══════════════════════ HEADER ═══════════════════════ -->
+  <header id="site-header">
+    <div class="header-brand">
+      <span class="brand-icon">⚔</span>
+      <span class="brand-name">RitterRadar</span>
+      <span class="brand-tagline">Mittelalterliche Märkte entdecken</span>
+    </div>
+    <div class="header-actions">
+      <span id="market-count" class="badge">0 Märkte</span>
+      <button id="btn-refresh" class="btn-icon" title="Daten aktualisieren">↻</button>
+    </div>
+  </header>
+
+  <!-- ═══════════════════════ LAYOUT ═══════════════════════ -->
+  <div id="layout">
+
+    <!-- ─── LEFT SIDEBAR: Filters ─── -->
+    <aside id="sidebar">
+      <div class="sidebar-section">
+        <h2 class="sidebar-title">⚜ Heimatort</h2>
+        <div class="home-input-group">
+          <input id="home-input" type="text" placeholder="PLZ oder Stadt eingeben…"
+                 autocomplete="off" />
+          <button id="btn-geocode" class="btn-primary btn-sm">Suchen</button>
+        </div>
+        <div id="home-status" class="home-status hidden"></div>
+        <label class="slider-label">
+          Umkreis: <strong id="radius-value">100</strong> km
+        </label>
+        <input id="radius-slider" type="range" min="10" max="500" value="100" step="10" />
+      </div>
+
+      <div class="sidebar-section">
+        <h2 class="sidebar-title">📅 Zeitraum</h2>
+        <div class="month-range-group">
+          <label>Von Monat:</label>
+          <select id="month-from"></select>
+          <label>Bis Monat:</label>
+          <select id="month-to"></select>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <h2 class="sidebar-title">🏰 Markttyp</h2>
+        <div id="type-filters" class="type-filter-grid">
+          <label class="type-check">
+            <input type="checkbox" value="medieval" checked /> Mittelalter
+          </label>
+          <label class="type-check">
+            <input type="checkbox" value="renaissance" checked /> Renaissance
+          </label>
+          <label class="type-check">
+            <input type="checkbox" value="viking" checked /> Wikinger
+          </label>
+          <label class="type-check">
+            <input type="checkbox" value="fantasy" checked /> Fantasy
+          </label>
+          <label class="type-check">
+            <input type="checkbox" value="christmas" checked /> Weihnacht
+          </label>
+        </div>
+        <button id="btn-apply" class="btn-primary btn-full">Karte aktualisieren</button>
+      </div>
+
+      <div class="sidebar-section">
+        <h2 class="sidebar-title">🗺 Legende</h2>
+        <div class="legend-grid">
+          <span class="legend-dot medieval"></span><span>Mittelalter</span>
+          <span class="legend-dot renaissance"></span><span>Renaissance</span>
+          <span class="legend-dot viking"></span><span>Wikinger</span>
+          <span class="legend-dot fantasy"></span><span>Fantasy</span>
+          <span class="legend-dot christmas"></span><span>Weihnacht</span>
+          <span class="legend-dot uncertain"></span><span>Unsicherer Ort !</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ─── MAP ─── -->
+    <main id="map-container">
+      <div id="map"></div>
+
+      <!-- Overlay shown while loading -->
+      <div id="map-loading" class="map-overlay">
+        <div class="spinner"></div>
+        <p>Karte wird geladen…</p>
+      </div>
+    </main>
+
+    <!-- ─── RIGHT: Detail Panel ─── -->
+    <aside id="detail-panel" class="hidden">
+      <button id="detail-close" class="detail-close" title="Schließen">✕</button>
+      <div id="detail-content"></div>
+    </aside>
+
+  </div><!-- /layout -->
+
+  <!-- ═══════════════════════ CRAWLER STATUS BAR ═══════════════════════ -->
+  <footer id="status-bar">
+    <div class="status-summary">
+      <span class="status-label">Crawler:</span>
+      <span id="status-pending" class="status-badge pending">0 wartend</span>
+      <span id="status-running" class="status-badge running">0 läuft</span>
+      <span id="status-completed" class="status-badge completed">0 fertig</span>
+      <span id="status-failed" class="status-badge failed">0 Fehler</span>
+    </div>
+    <div class="status-actions">
+      <button id="btn-trigger-crawl" class="btn-sm btn-ghost">⟳ Neu laden</button>
+      <button id="btn-toggle-jobs" class="btn-sm btn-ghost">Jobs ▾</button>
+    </div>
+  </footer>
+
+  <!-- ═══════════════════════ JOBS PANEL ═══════════════════════ -->
+  <div id="jobs-panel" class="hidden">
+    <div id="jobs-list"></div>
+  </div>
+
+</div><!-- /app -->
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/js/map.js" type="module"></script>
+<script src="/static/js/filters.js" type="module"></script>
+<script src="/static/js/detail-panel.js" type="module"></script>
+<script src="/static/js/crawler-status.js" type="module"></script>
+{% endblock %}
