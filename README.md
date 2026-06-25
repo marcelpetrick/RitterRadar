@@ -45,20 +45,32 @@ leaves your machine.
 
 ## Installation
 
+**Recommended — one command does everything** (venv, deps, DB migration):
+
 ```bash
 # 1. Clone the repository
 git clone https://github.com/mpetrick/RitterRadar.git
 cd RitterRadar
 
-# 2. Create and activate a virtual environment (recommended)
-python3 -m venv .venv
-source .venv/bin/activate          # Linux / macOS
-# .venv\Scripts\activate           # Windows
+# 2. Copy and edit the environment file
+cp .env.example .env
+# Set RITTERRADAR_GEOCODER_EMAIL to your e-mail address
 
-# 3. Install the package and all dependencies
+# 3. Run the setup script (creates .venv/, installs deps, migrates DB)
+bash scripts/prepare.sh
+```
+
+> `prepare.sh` works on Arch/Manjaro and any system that enforces
+> PEP 668 (externally-managed-environment).  It never touches the
+> system Python — everything goes into `.venv/`.
+
+**Manual alternative:**
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -e ".[dev]"
-# Or use the script:
-bash scripts/install.sh
+alembic upgrade head
 ```
 
 ---
@@ -255,6 +267,8 @@ sqlite3 data/ritterradar.db "SELECT name, start_date, city FROM market LIMIT 20;
 ### Install dev dependencies
 
 ```bash
+bash scripts/prepare.sh          # first time
+# or manually:
 pip install -e ".[dev]"
 ```
 
