@@ -8,6 +8,12 @@ locations, and displays results on a Leaflet/OpenStreetMap map with medieval
 visual styling.  Everything runs locally — no cloud, no accounts, no data
 leaves your machine.
 
+**Author: Marcel Petrick <mail@marcelpetrick.it>**
+
+**Note: projected is generated with AI.**
+
+**License: GPLv3 or later. See `LICENSE`.**
+
 ![map screenshot placeholder](docs/screenshot-placeholder.png)
 
 ---
