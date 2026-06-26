@@ -32,10 +32,13 @@ async def geo_progress(
     session: Annotated[Session, Depends(get_session)],
 ) -> dict[str, int]:
     """Return how many markets have / lack geocoordinates."""
-    total    = session.exec(select(func.count()).select_from(Market)).one() or 0
-    geocoded = session.exec(
-        select(func.count()).select_from(Market).where(Market.latitude.isnot(None))  # type: ignore[union-attr]
-    ).one() or 0
+    total = session.exec(select(func.count()).select_from(Market)).one() or 0
+    geocoded = (
+        session.exec(
+            select(func.count()).select_from(Market).where(Market.latitude.isnot(None))  # type: ignore[union-attr]
+        ).one()
+        or 0
+    )
     return {"total": total, "geocoded": geocoded, "pending": total - geocoded}
 
 

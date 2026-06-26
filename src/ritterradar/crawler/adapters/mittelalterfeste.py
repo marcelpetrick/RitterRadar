@@ -115,7 +115,7 @@ def _parse_item(item: Tag, source_name: str) -> MarketData | None:
     if m:
         postal_code = m.group(1)
         city = m.group(2)
-    elif (pm := POSTAL_RE.search(location_text)):
+    elif pm := POSTAL_RE.search(location_text):
         postal_code = pm.group(1)
 
     # Source URL

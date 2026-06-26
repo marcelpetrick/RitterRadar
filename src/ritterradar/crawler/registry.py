@@ -17,9 +17,11 @@ _REGISTRY: dict[str, type["AbstractCrawlerAdapter"]] = {}
 
 def register(name: str):  # type: ignore[return]
     """Class decorator: register an adapter under *name*."""
+
     def decorator(cls: type["AbstractCrawlerAdapter"]) -> type["AbstractCrawlerAdapter"]:
         _REGISTRY[name] = cls
         return cls
+
     return decorator
 
 
@@ -47,4 +49,5 @@ def _ensure_adapters_loaded() -> None:
     global _adapters_loaded
     if not _adapters_loaded:
         import ritterradar.crawler.adapters  # noqa: F401
+
         _adapters_loaded = True

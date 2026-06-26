@@ -12,9 +12,6 @@ events in the navigation as <a href="/termine/SLUG/">DATE CITY</a> links.
 We parse those links and optionally follow each one for a postal code.
 """
 
-__version__ = "0.1.0"
-_VERIFIED_DATE = "2026-06-25"
-
 import logging
 import re
 from datetime import date
@@ -28,6 +25,9 @@ from ritterradar.crawler.registry import register
 
 logger = logging.getLogger(__name__)
 
+__version__ = "0.1.0"
+_VERIFIED_DATE = "2026-06-25"
+
 BASE = "https://www.spectaculum.de"
 
 # Matches nav link text like:
@@ -35,10 +35,10 @@ BASE = "https://www.spectaculum.de"
 #   "14.08. - 16.08.2026Weil am Rhein"
 #   "06.05. - 09.05.2027Rastede"
 _DATE_CITY_RE = re.compile(
-    r"(\d{1,2})\.(\d{2})\."        # start day, start month
-    r"\s*[+\-–]\s*"                 # separator (plus, hyphen, en-dash)
-    r"(\d{1,2})\.(\d{2})\.(\d{4})" # end day, end month, year
-    r"\s*(.*)",                      # city name (rest of string)
+    r"(\d{1,2})\.(\d{2})\."  # start day, start month
+    r"\s*[+\-–]\s*"  # separator (plus, hyphen, en-dash)
+    r"(\d{1,2})\.(\d{2})\.(\d{4})"  # end day, end month, year
+    r"\s*(.*)",  # city name (rest of string)
     re.S,
 )
 
@@ -66,8 +66,7 @@ class SpectaculumAdapter(AbstractCrawlerAdapter):
 
         # All event links in the nav have href like /termine/SLUG/
         event_links = [
-            a for a in soup.find_all("a", href=True)
-            if re.match(r"^/termine/\w", a["href"])
+            a for a in soup.find_all("a", href=True) if re.match(r"^/termine/\w", a["href"])
         ]
 
         seen: set[str] = set()

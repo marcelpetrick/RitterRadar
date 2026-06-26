@@ -56,6 +56,15 @@ sources:
     enabled: true
     crawl_interval_hours: 24
 
+  # Taterman.at — Austrian medieval-market info magazine.
+  # ~26 events/year (2026) in iCal format; "Markt" category only.
+  # Feed: /termin/categories/markt/?ical=1 (wp-events-plugin.com).
+  - name: "Taterman.at"
+    url: "https://www.taterman.at"
+    adapter: "taterman_at"
+    enabled: true
+    crawl_interval_hours: 24
+
   # ── DISABLED — investigate before re-enabling ─────────────────────────
 
   # mittelalterfeste.de — domain expired, now parked on Sedo (sedo.com).

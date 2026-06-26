@@ -18,9 +18,6 @@ Page structure (verified 2026-06-25):
     [5] Details button (same URL as [2])
 """
 
-__version__ = "0.1.0"
-_VERIFIED_DATE = "2026-06-25"
-
 import logging
 import re
 from datetime import date, datetime
@@ -34,15 +31,18 @@ from ritterradar.crawler.registry import register
 
 logger = logging.getLogger(__name__)
 
+__version__ = "0.1.0"
+_VERIFIED_DATE = "2026-06-25"
+
 BASE = "https://www.mittelalterkalender.info"
 _DATE_FMT = "%d.%m.%Y"
 _DATE_RE = re.compile(r"\d{2}\.\d{2}\.\d{4}")
 # Detect type from event title
 _TYPE_KEYWORDS: dict[str, list[str]] = {
-    "christmas":   ["weihnacht", "advent", "nikolaus", "winter"],
-    "viking":      ["wikinger", "viking", "nordisch", "haithabu"],
+    "christmas": ["weihnacht", "advent", "nikolaus", "winter"],
+    "viking": ["wikinger", "viking", "nordisch", "haithabu"],
     "renaissance": ["renaissance", "historisch", "landsknecht"],
-    "fantasy":     ["fantasy", "drachen", "magie", "elfen", "mytho"],
+    "fantasy": ["fantasy", "drachen", "magie", "elfen", "mytho"],
 }
 
 
@@ -75,7 +75,7 @@ def _parse_row(row: Tag) -> MarketData | None:
         return None
 
     start = _parse_date(cells[0].get_text(strip=True))
-    end   = _parse_date(cells[1].get_text(strip=True))
+    end = _parse_date(cells[1].get_text(strip=True))
     if start is None or end is None:
         return None
 
@@ -86,7 +86,7 @@ def _parse_row(row: Tag) -> MarketData | None:
         return None
 
     postal_code = cells[3].get_text(strip=True) or None
-    city        = cells[4].get_text(strip=True) or None
+    city = cells[4].get_text(strip=True) or None
 
     # Detail page URL from button formaction attribute
     source_url = BASE

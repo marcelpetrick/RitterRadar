@@ -23,12 +23,9 @@ Date formats observed:
   DD.MM.YYYY–DD.MM.YYYY         (rare full-date both sides)
 """
 
-__version__ = "0.1.0"
-_VERIFIED_DATE = "2026-06-25"
-
 import logging
 import re
-from datetime import date, datetime
+from datetime import date
 
 from bs4 import BeautifulSoup
 
@@ -38,35 +35,38 @@ from ritterradar.crawler.registry import register
 
 logger = logging.getLogger(__name__)
 
+__version__ = "0.1.0"
+_VERIFIED_DATE = "2026-06-25"
+
 BASE = "https://vehi-mercatus.de"
 
 # Type mapping from site's own categories
 _TYPE_MAP = {
-    "Mittelaltermarkt":              "medieval",
-    "Mittelalterfest":               "medieval",
-    "Mittelalterspektakel":          "medieval",
-    "Spektakulum":                   "medieval",
-    "Ritterfest":                    "medieval",
-    "Ritterturnier":                 "medieval",
-    "Burgfest":                      "medieval",
-    "Stadtfest":                     "medieval",
-    "Freilichttheater":              "medieval",
-    "Wikingerspektakel":             "viking",
-    "LARP-Event":                    "fantasy",
+    "Mittelaltermarkt": "medieval",
+    "Mittelalterfest": "medieval",
+    "Mittelalterspektakel": "medieval",
+    "Spektakulum": "medieval",
+    "Ritterfest": "medieval",
+    "Ritterturnier": "medieval",
+    "Burgfest": "medieval",
+    "Stadtfest": "medieval",
+    "Freilichttheater": "medieval",
+    "Wikingerspektakel": "viking",
+    "LARP-Event": "fantasy",
     "Mittelalterlicher Weihnachtsmarkt": "christmas",
-    "Mittelalter-Rock-Festival":     "medieval",
+    "Mittelalter-Rock-Festival": "medieval",
 }
 
 # Regex for the various date formats
 # Group 1: start day, Group 2: start month (may be missing), Group 3: end day,
 # Group 4: end month, Group 5: year
 _RANGE_RE = re.compile(
-    r"(\d{1,2})\."         # start day
-    r"(?:(\d{2})\.)?"      # optional start month
-    r"[–-]"                # en-dash or hyphen separator
-    r"(\d{1,2})\."         # end day
-    r"(\d{2})\."           # end month
-    r"(\d{4})"             # year
+    r"(\d{1,2})\."  # start day
+    r"(?:(\d{2})\.)?"  # optional start month
+    r"[–-]"  # en-dash or hyphen separator
+    r"(\d{1,2})\."  # end day
+    r"(\d{2})\."  # end month
+    r"(\d{4})"  # year
 )
 # Single day: DD.MM.YYYY
 _SINGLE_RE = re.compile(r"(\d{1,2})\.(\d{2})\.(\d{4})")
@@ -83,10 +83,10 @@ def _parse_date_field(text: str) -> tuple[date, date] | None:
     m = _RANGE_RE.search(text)
     if m:
         sd, sm, ed, em, y = m.groups()
-        start_month = sm if sm else em   # borrow end month if start month absent
+        start_month = sm if sm else em  # borrow end month if start month absent
         try:
             start = date(int(y), int(start_month), int(sd))
-            end   = date(int(y), int(em), int(ed))
+            end = date(int(y), int(em), int(ed))
             return start, end
         except ValueError:
             pass
@@ -109,10 +109,7 @@ def _parse_location(text: str) -> tuple[str | None, str | None]:
 
 
 def _page_url(year: int, page: int) -> str:
-    return (
-        f"{BASE}/marktkalender/?ansicht=liste"
-        f"&land=Deutschland&jahr={year}&seite={page}"
-    )
+    return f"{BASE}/marktkalender/?ansicht=liste&land=Deutschland&jahr={year}&seite={page}"
 
 
 def _map_type(site_type: str) -> str:
@@ -148,14 +145,14 @@ class VehiMercatusAdapter(AbstractCrawlerAdapter):
                 for row in rows:
                     date_el = row.find(class_="mk-compact-col-date")
                     name_el = row.find(class_="mk-compact-col-name")
-                    loc_el  = row.find(class_="mk-compact-col-location")
+                    loc_el = row.find(class_="mk-compact-col-location")
                     type_el = row.find(class_="mk-compact-col-type")
                     if not (date_el and name_el):
                         continue
 
                     date_text = date_el.get_text(strip=True)
-                    name_raw  = name_el.get_text(strip=True)
-                    loc_text  = loc_el.get_text(strip=True) if loc_el else ""
+                    name_raw = name_el.get_text(strip=True)
+                    loc_text = loc_el.get_text(strip=True) if loc_el else ""
                     type_text = type_el.get_text(strip=True) if type_el else ""
 
                     dates = _parse_date_field(date_text)
@@ -172,7 +169,10 @@ class VehiMercatusAdapter(AbstractCrawlerAdapter):
                     if not href:
                         link = row.find("a", href=True)
                         href = link["href"] if link else ""
-                    source_url = (BASE + href) if href and not href.startswith("http") else (href or f"{BASE}/marktkalender/")
+                    if href and not href.startswith("http"):
+                        source_url = BASE + href
+                    else:
+                        source_url = href or f"{BASE}/marktkalender/"
 
                     results.append(
                         MarketData(
@@ -200,7 +200,9 @@ class VehiMercatusAdapter(AbstractCrawlerAdapter):
 
             logger.info(
                 "%s: scraped %d events so far (after year %d)",
-                self.SOURCE_NAME, len(results), year,
+                self.SOURCE_NAME,
+                len(results),
+                year,
             )
 
         logger.info("%s: scraped %d events total", self.SOURCE_NAME, len(results))

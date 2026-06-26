@@ -12,5 +12,6 @@ from ritterradar.crawler.adapters import (  # noqa: F401
     ritterschaft,
     schwerttanz,
     spectaculum,
+    taterman_at,
     vehi_mercatus,
 )

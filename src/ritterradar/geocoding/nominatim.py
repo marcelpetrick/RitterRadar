@@ -10,7 +10,7 @@
 import asyncio
 import logging
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlmodel import Session, select
 
@@ -84,7 +84,7 @@ def _cache_set(normalised_query: str, result: GeoResult) -> None:
                     longitude=result.longitude,
                     display_name=result.display_name,
                     uncertain=result.uncertain,
-                    cached_at=datetime.now(timezone.utc),
+                    cached_at=datetime.now(UTC),
                 )
             )
         else:
@@ -92,7 +92,7 @@ def _cache_set(normalised_query: str, result: GeoResult) -> None:
             existing.longitude = result.longitude
             existing.display_name = result.display_name
             existing.uncertain = result.uncertain
-            existing.cached_at = datetime.now(timezone.utc)
+            existing.cached_at = datetime.now(UTC)
             session.add(existing)
         session.commit()
 

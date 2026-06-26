@@ -8,8 +8,9 @@
 """Crawler worker — processes one CrawlJob at a time with full failure isolation."""
 
 import asyncio
+import contextlib
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, select
@@ -41,10 +42,8 @@ class CrawlWorker:
     async def stop(self) -> None:
         if self._task:
             self._task.cancel()
-            try:
+            with contextlib.suppress(asyncio.CancelledError):
                 await self._task
-            except asyncio.CancelledError:
-                pass
 
     async def _run(self) -> None:
         async with make_client() as http:
@@ -57,7 +56,9 @@ class CrawlWorker:
                 try:
                     await self._process(job_id, client)
                 except Exception:
-                    logger.exception("Worker %d: unhandled error for job %d", self._worker_id, job_id)
+                    logger.exception(
+                        "Worker %d: unhandled error for job %d", self._worker_id, job_id
+                    )
                 finally:
                     self._queue.task_done()
 
@@ -81,12 +82,12 @@ class CrawlWorker:
                 return
 
             # Read all attributes we need before session closes
-            source_name    = job.source_name
+            source_name = job.source_name
             source_adapter = source.adapter_name
-            source_id      = source.id
+            source_id = source.id
 
             job.status = "running"
-            job.started_at = datetime.now(timezone.utc)
+            job.started_at = datetime.now(UTC)
             session.add(job)
             session.commit()
 
@@ -139,20 +140,18 @@ class CrawlWorker:
             job = session.get(CrawlJob, job_id)
             if job:
                 job.status = "failed"
-                job.finished_at = datetime.now(timezone.utc)
+                job.finished_at = datetime.now(UTC)
                 job.error_message = error[:2000]
                 session.add(job)
                 session.commit()
         logger.error("Job %d failed: %s", job_id, error)
 
-    async def _complete(
-        self, job_id: int, discovered: int, inserted: int, updated: int
-    ) -> None:
+    async def _complete(self, job_id: int, discovered: int, inserted: int, updated: int) -> None:
         with Session(get_engine()) as session:
             job = session.get(CrawlJob, job_id)
             if job:
                 job.status = "completed"
-                job.finished_at = datetime.now(timezone.utc)
+                job.finished_at = datetime.now(UTC)
                 job.events_discovered = discovered
                 job.events_inserted = inserted
                 job.events_updated = updated
@@ -165,7 +164,7 @@ class CrawlWorker:
         with Session(get_engine()) as session:
             src = session.get(Source, source_id)
             if src:
-                src.last_crawled_at = datetime.now(timezone.utc)
+                src.last_crawled_at = datetime.now(UTC)
                 src.last_error = error[:2000]
                 session.add(src)
                 session.commit()
@@ -176,7 +175,7 @@ class CrawlWorker:
         with Session(get_engine()) as session:
             src = session.get(Source, source_id)
             if src:
-                now = datetime.now(timezone.utc)
+                now = datetime.now(UTC)
                 src.last_crawled_at = now
                 src.last_success_at = now
                 src.last_error = None
@@ -237,7 +236,7 @@ def _upsert_market(
                 )
             ).first()
 
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         if existing is None:
             market = Market(
                 name=mdata.name,

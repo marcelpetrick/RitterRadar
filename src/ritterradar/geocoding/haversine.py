@@ -33,7 +33,8 @@ def distance_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     delta_phi = math.radians(lat2 - lat1)
     delta_lambda = math.radians(lon2 - lon1)
 
-    a = math.sin(delta_phi / 2) ** 2 + math.cos(phi1) * math.cos(phi2) * math.sin(
-        delta_lambda / 2
-    ) ** 2
+    a = (
+        math.sin(delta_phi / 2) ** 2
+        + math.cos(phi1) * math.cos(phi2) * math.sin(delta_lambda / 2) ** 2
+    )
     return 2 * R * math.asin(math.sqrt(a))

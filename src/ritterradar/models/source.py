@@ -8,7 +8,6 @@
 """Source database model — a configured crawl target."""
 
 from datetime import datetime
-from typing import Optional
 
 from sqlmodel import Field, SQLModel
 
@@ -18,12 +17,12 @@ class Source(SQLModel, table=True):
 
     __tablename__ = "source"
 
-    id: Optional[int] = Field(default=None, primary_key=True)
+    id: int | None = Field(default=None, primary_key=True)
     name: str = Field(unique=True, index=True)
     base_url: str
     adapter_name: str
     enabled: bool = Field(default=True)
     crawl_interval_hours: int = Field(default=24)
-    last_crawled_at: Optional[datetime] = Field(default=None)
-    last_success_at: Optional[datetime] = Field(default=None)
-    last_error: Optional[str] = Field(default=None)
+    last_crawled_at: datetime | None = Field(default=None)
+    last_success_at: datetime | None = Field(default=None)
+    last_error: str | None = Field(default=None)

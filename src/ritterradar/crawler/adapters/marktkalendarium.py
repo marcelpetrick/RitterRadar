@@ -32,13 +32,9 @@ Country prefixes seen in 2026 data:
   NL → NL (1 event)
 """
 
-__version__ = "0.1.0"
-_VERIFIED_DATE = "2026-06-25"
-
 import logging
 import re
 from datetime import date
-from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup, Tag
 
@@ -48,6 +44,9 @@ from ritterradar.crawler.registry import register
 
 logger = logging.getLogger(__name__)
 
+__version__ = "0.1.0"
+_VERIFIED_DATE = "2026-06-25"
+
 BASE = "https://marktkalendarium.de"
 
 # Date cells use variable-width parts: "6.6.2026" or "26.12.2026"
@@ -55,26 +54,26 @@ _DATE_RE = re.compile(r"(\d{1,2})\.(\d{1,2})\.(\d{4})")
 
 # Country-code prefix → ISO 3166-1 alpha-2
 _COUNTRY_MAP: dict[str, str] = {
-    "D-":  "DE",
-    "A-":  "AT",
+    "D-": "DE",
+    "A-": "AT",
     "CH-": "CH",
-    "CH":  "CH",
+    "CH": "CH",
     "Ch-": "CH",
-    "Ch":  "CH",
-    "L-":  "LU",
-    "DK":  "DK",
-    "I-":  "IT",
-    "B-":  "BE",
-    "NL":  "NL",
+    "Ch": "CH",
+    "L-": "LU",
+    "DK": "DK",
+    "I-": "IT",
+    "B-": "BE",
+    "NL": "NL",
     "NL-": "NL",
 }
 
 # Detect special market types from name
 _TYPE_KEYWORDS: dict[str, list[str]] = {
-    "christmas":   ["weihnacht", "advent", "nikolaus", "winter", "christkind"],
-    "viking":      ["wikinger", "viking", "nordisch", "haithabu", "keltisch", "celtic", "kelt"],
+    "christmas": ["weihnacht", "advent", "nikolaus", "winter", "christkind"],
+    "viking": ["wikinger", "viking", "nordisch", "haithabu", "keltisch", "celtic", "kelt"],
     "renaissance": ["renaissance", "historisch", "landsknecht", "baroque"],
-    "fantasy":     ["fantasy", "drachen", "magie", "elfen", "mytho", "steampunk", "pirat"],
+    "fantasy": ["fantasy", "drachen", "magie", "elfen", "mytho", "steampunk", "pirat"],
 }
 
 
@@ -96,7 +95,7 @@ def _parse_location(cell: Tag) -> tuple[str | None, str | None, str]:
     for prefix, iso in _COUNTRY_MAP.items():
         if raw.upper().startswith(prefix.upper()):
             country = iso
-            raw = raw[len(prefix):]
+            raw = raw[len(prefix) :]
             break
 
     parts = raw.strip().split(None, 1)  # split on first whitespace
@@ -133,7 +132,7 @@ def _parse_row(row: Tag) -> MarketData | None:
         return None
 
     start = _parse_date(cells[0].get_text(strip=True))
-    end   = _parse_date(cells[1].get_text(strip=True))
+    end = _parse_date(cells[1].get_text(strip=True))
     if start is None:
         return None
     if end is None:
@@ -184,7 +183,8 @@ class MarktkalendariumAdapter(AbstractCrawlerAdapter):
 
             # All rows containing dates — no class selector needed
             date_rows = [
-                tr for tr in soup.find_all("tr")
+                tr
+                for tr in soup.find_all("tr")
                 if _DATE_RE.search(tr.get_text()) and len(tr.find_all("td")) >= 6
             ]
             logger.info("%s: %d rows found for %d", self.SOURCE_NAME, len(date_rows), year)

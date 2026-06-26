@@ -8,7 +8,6 @@
 """CrawlJob model — one execution of a crawler adapter against a Source."""
 
 from datetime import datetime
-from typing import Optional
 
 from sqlmodel import Field, SQLModel
 
@@ -18,7 +17,7 @@ class CrawlJob(SQLModel, table=True):
 
     __tablename__ = "crawl_job"
 
-    id: Optional[int] = Field(default=None, primary_key=True)
+    id: int | None = Field(default=None, primary_key=True)
     source_id: int = Field(foreign_key="source.id", index=True)
     source_name: str
     status: str = Field(
@@ -26,9 +25,9 @@ class CrawlJob(SQLModel, table=True):
         description="pending | running | completed | failed | skipped",
         index=True,
     )
-    started_at: Optional[datetime] = Field(default=None)
-    finished_at: Optional[datetime] = Field(default=None)
+    started_at: datetime | None = Field(default=None)
+    finished_at: datetime | None = Field(default=None)
     events_discovered: int = Field(default=0)
     events_inserted: int = Field(default=0)
     events_updated: int = Field(default=0)
-    error_message: Optional[str] = Field(default=None)
+    error_message: str | None = Field(default=None)

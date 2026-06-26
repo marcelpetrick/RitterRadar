@@ -55,7 +55,9 @@ class GenericTableAdapter(AbstractCrawlerAdapter):
         for table in soup.find_all("table"):
             rows = table.find_all("tr")
             for row in rows[1:]:  # skip header row
-                cells = [td.get_text(separator=" ", strip=True) for td in row.find_all(["td", "th"])]
+                cells = [
+                    td.get_text(separator=" ", strip=True) for td in row.find_all(["td", "th"])
+                ]
                 if len(cells) < 2:
                     continue
                 mdata = _parse_row(cells, self.BASE_URL)
@@ -69,7 +71,7 @@ class GenericTableAdapter(AbstractCrawlerAdapter):
 def _parse_row(cells: list[str], source_url: str) -> MarketData | None:
     date_cell = name_cell = location_cell = None
 
-    for i, cell in enumerate(cells):
+    for _i, cell in enumerate(cells):
         if parse_date_range(cell) is not None and date_cell is None:
             date_cell = cell
         elif name_cell is None and len(cell) > 3:
@@ -91,7 +93,7 @@ def _parse_row(cells: list[str], source_url: str) -> MarketData | None:
         if m:
             postal_code = m.group(1)
             city = m.group(2)
-        elif (pm := POSTAL_CODE_RE.search(location_cell)):
+        elif pm := POSTAL_CODE_RE.search(location_cell):
             postal_code = pm.group(1)
 
     return MarketData(

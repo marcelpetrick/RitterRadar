@@ -24,9 +24,7 @@ _BACKOFF_MAX = 60.0
 _TIMEOUT = 30.0
 
 # Realistic browser UA — many sites block non-browser strings outright
-_USER_AGENT = (
-    "Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0"
-)
+_USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0"
 
 
 def _domain_root(host: str) -> str:

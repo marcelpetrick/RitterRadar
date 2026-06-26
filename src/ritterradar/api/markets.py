@@ -7,7 +7,7 @@
 # (at your option) any later version.
 """Markets API — listing, filtering, and visibility control."""
 
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -72,7 +72,13 @@ async def list_markets(
     results: list[MarketOut] = []
     for m in markets:
         dist: float | None = None
-        if lat is not None and lon is not None and m.latitude is not None and m.longitude is not None:
+        coords_ok = (
+            lat is not None
+            and lon is not None
+            and m.latitude is not None
+            and m.longitude is not None
+        )
+        if coords_ok:
             dist = round(distance_km(lat, lon, m.latitude, m.longitude), 1)
             if radius_km is not None and dist > radius_km:
                 continue
@@ -114,6 +120,6 @@ async def toggle_hide(
     if market is None:
         raise HTTPException(status_code=404, detail="Market not found")
     market.hidden = not market.hidden
-    market.updated_at = datetime.now(timezone.utc)
+    market.updated_at = datetime.now(UTC)
     session.add(market)
     return {"id": market_id, "hidden": market.hidden}

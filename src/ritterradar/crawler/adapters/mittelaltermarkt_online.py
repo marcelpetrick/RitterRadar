@@ -52,9 +52,6 @@ Category-to-market-type mapping:
   fantasy-*                  → fantasy
 """
 
-__version__ = "0.1.0"
-_VERIFIED_DATE = "2026-06-25"
-
 import html
 import logging
 from datetime import date, datetime
@@ -64,6 +61,9 @@ from ritterradar.crawler.http_client import PoliteHttpClient
 from ritterradar.crawler.registry import register
 
 logger = logging.getLogger(__name__)
+
+__version__ = "0.1.0"
+_VERIFIED_DATE = "2026-06-25"
 
 BASE = "https://mittelaltermarkt.online"
 _API_URL = f"{BASE}/wp-json/tribe/events/v1/events"
@@ -75,13 +75,13 @@ _GERMAN_NAMES = {"deutschland", "germany"}
 
 # Category slug → market_type
 _CATEGORY_TYPE: dict[str, str] = {
-    "weihnachtsmaerkte":     "christmas",
-    "wikingerspektakel":     "viking",
-    "wikinger":              "viking",
-    "renaissance":           "renaissance",
-    "renaissance-feste":     "renaissance",
-    "fantasyfeste":          "fantasy",
-    "fantasy-feste":         "fantasy",
+    "weihnachtsmaerkte": "christmas",
+    "wikingerspektakel": "viking",
+    "wikinger": "viking",
+    "renaissance": "renaissance",
+    "renaissance-feste": "renaissance",
+    "fantasyfeste": "fantasy",
+    "fantasy-feste": "fantasy",
 }
 _MEDIEVAL_SLUGS = {
     "mittelaltermaerkten",
@@ -95,13 +95,13 @@ _MEDIEVAL_SLUGS = {
 # Country display name → ISO 3166-1 alpha-2
 _COUNTRY_ISO: dict[str, str] = {
     "Deutschland": "DE",
-    "Germany":     "DE",
-    "Österreich":  "AT",
-    "Austria":     "AT",
-    "Schweiz":     "CH",
+    "Germany": "DE",
+    "Österreich": "AT",
+    "Austria": "AT",
+    "Schweiz": "CH",
     "Switzerland": "CH",
-    "Luxemburg":   "LU",
-    "Luxembourg":  "LU",
+    "Luxemburg": "LU",
+    "Luxembourg": "LU",
 }
 
 
@@ -138,7 +138,7 @@ def _parse_event(ev: dict) -> MarketData | None:
         return None
 
     start = _parse_date(ev.get("start_date", ""))
-    end   = _parse_date(ev.get("end_date", ""))
+    end = _parse_date(ev.get("end_date", ""))
     if start is None:
         return None
     if end is None:
@@ -148,10 +148,10 @@ def _parse_event(ev: dict) -> MarketData | None:
 
     # Venue data
     venue: dict = ev.get("venue") or {}
-    city         = venue.get("city") or None
-    postal_code  = venue.get("zip") or None
-    country_raw  = venue.get("country", "Deutschland")
-    country      = _COUNTRY_ISO.get(country_raw, "DE")
+    city = venue.get("city") or None
+    postal_code = venue.get("zip") or None
+    country_raw = venue.get("country", "Deutschland")
+    country = _COUNTRY_ISO.get(country_raw, "DE")
     geo_lat: float | None = venue.get("geo_lat") or None
     geo_lng: float | None = venue.get("geo_lng") or None
 
@@ -195,7 +195,7 @@ class MittelaltermarktOnlineAdapter(AbstractCrawlerAdapter):
         results: list[MarketData] = []
         today = date.today()
         start_filter = f"{today.year}-01-01"
-        end_filter   = f"{today.year + 1}-12-31"
+        end_filter = f"{today.year + 1}-12-31"
 
         page = 1
         total_pages = 1  # updated after first response
@@ -224,7 +224,9 @@ class MittelaltermarktOnlineAdapter(AbstractCrawlerAdapter):
                 total = int(data.get("total", 0))
                 logger.info(
                     "%s: %d events across %d pages",
-                    self.SOURCE_NAME, total, total_pages,
+                    self.SOURCE_NAME,
+                    total,
+                    total_pages,
                 )
 
             events: list[dict] = data.get("events") or []
@@ -238,6 +240,9 @@ class MittelaltermarktOnlineAdapter(AbstractCrawlerAdapter):
         pre_geocoded = sum(1 for r in results if r.latitude is not None)
         logger.info(
             "%s: scraped %d events (%d with pre-geocoded coords, %d need Nominatim)",
-            self.SOURCE_NAME, len(results), pre_geocoded, len(results) - pre_geocoded,
+            self.SOURCE_NAME,
+            len(results),
+            pre_geocoded,
+            len(results) - pre_geocoded,
         )
         return results

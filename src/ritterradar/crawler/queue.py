@@ -9,7 +9,6 @@
 
 import asyncio
 import logging
-from datetime import datetime, timezone
 from pathlib import Path
 
 import yaml
@@ -126,7 +125,13 @@ class CrawlQueue:
                 select(CrawlJob).order_by(CrawlJob.id.desc()).limit(100)  # type: ignore[union-attr]
             ).all()
 
-        counts: dict[str, int] = {"pending": 0, "running": 0, "completed": 0, "failed": 0, "skipped": 0}
+        counts: dict[str, int] = {
+            "pending": 0,
+            "running": 0,
+            "completed": 0,
+            "failed": 0,
+            "skipped": 0,
+        }
         for job in jobs:
             if job.status in counts:
                 counts[job.status] += 1

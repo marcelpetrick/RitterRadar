@@ -7,8 +7,7 @@
 # (at your option) any later version.
 """Market database model."""
 
-from datetime import date, datetime, timezone
-from typing import Optional
+from datetime import UTC, date, datetime
 
 from sqlalchemy import UniqueConstraint
 from sqlmodel import Field, SQLModel
@@ -22,7 +21,7 @@ class Market(SQLModel, table=True):
         UniqueConstraint("name", "start_date", "source_url", name="uq_market_identity"),
     )
 
-    id: Optional[int] = Field(default=None, primary_key=True)
+    id: int | None = Field(default=None, primary_key=True)
     name: str = Field(index=True, description="Official event name")
     market_type: str = Field(
         default="medieval",
@@ -30,18 +29,18 @@ class Market(SQLModel, table=True):
     )
     start_date: date = Field(index=True)
     end_date: date
-    address: Optional[str] = Field(default=None)
-    city: Optional[str] = Field(default=None, index=True)
-    postal_code: Optional[str] = Field(default=None)
+    address: str | None = Field(default=None)
+    city: str | None = Field(default=None, index=True)
+    postal_code: str | None = Field(default=None)
     country: str = Field(default="DE")
-    latitude: Optional[float] = Field(default=None)
-    longitude: Optional[float] = Field(default=None)
+    latitude: float | None = Field(default=None)
+    longitude: float | None = Field(default=None)
     geocode_uncertain: bool = Field(default=False)
-    program_text: Optional[str] = Field(default=None)
+    program_text: str | None = Field(default=None)
     original_text: str = Field(default="")
     source_url: str = Field(index=True)
     source_name: str
     hidden: bool = Field(default=False, index=True)
     confidence_score: float = Field(default=1.0)
-    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
