@@ -8,6 +8,24 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.0.34] — 2026-06-26
+### Added
+- **New adapter: taterman.at** (v0.1.0, verified 2026-06-26)
+  - Austrian medieval-market info magazine; ~26 events/year for 2026
+  - iCal feed at `/termin/categories/markt/?ical=1` (Markt category filtered)
+  - `icalendar==7.2.0` dependency added for RFC 5545 parsing
+  - Non-standard `DTSTART;TZID=...;VALUE=DATE` handled via property params;
+    DTEND is exclusive for all-day events (subtract 1 day to get last day)
+  - LOCATION parsed for 4-digit Austrian PLZ; province names filtered as non-cities
+  - Market-type keywords: Advent/Weihnacht → christmas, Wikinger → viking, etc.
+### Fixed
+- **88 pre-existing ruff violations eliminated** (codebase is now lint-clean):
+  - E402: `__version__` / `_VERIFIED_DATE` moved after imports in all adapters
+  - F401: unused imports removed (urljoin, datetime.datetime, datetime.timezone)
+  - E501: 6 lines shortened across api/markets, crawler, adapters
+  - B007: renamed unused loop variable `i` → `_i` in generic_table
+  - UP017: `datetime.UTC` alias (replaces `timezone.utc`) throughout
+
 ## [0.0.32] — 2026-06-26
 ### Fixed
 - **Cross-source duplicate markets eliminated** — three-phase upsert in `worker.py`:

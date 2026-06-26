@@ -1,6 +1,6 @@
 # RitterRadar — Crawler Sources Documentation
 
-Last verified: 2026-06-25 · 5 active sources · 4 disabled
+Last verified: 2026-06-26 · 6 active sources · 4 disabled
 
 ---
 
@@ -196,6 +196,67 @@ venue.geo_lng  → longitude (pre-geocoded, skips Nominatim)
 | `fantasy-*` | `fantasy` |
 
 **Key advantage:** 528/531 events have pre-geocoded `venue.geo_lat` / `venue.geo_lng` — the worker skips Nominatim for these, saving ~528 API calls per crawl cycle.
+
+---
+
+### 6. Taterman.at
+
+| Property | Value |
+|---|---|
+| **Adapter** | `taterman_at` · `__version__ = "0.1.0"` |
+| **Base URL** | https://www.taterman.at |
+| **Feed URL** | `/termin/categories/markt/?ical=1` (wp-events-plugin.com) |
+| **Events/year** | ~26 (2026, Austria only; growing) |
+| **Coverage** | Austria exclusively |
+| **Update frequency** | Community-submitted, continuously updated |
+
+**Access method: iCal feed (RFC 5545)**
+
+```
+GET https://www.taterman.at/termin/categories/markt/?ical=1
+Content-Type: text/calendar; charset=utf-8
+```
+
+Each VEVENT uses:
+```
+SUMMARY   → event name
+DTSTART;TZID=Europe/Vienna;VALUE=DATE:YYYYMMDD   → all-day start
+DTEND;TZID=Europe/Vienna;VALUE=DATE:YYYYMMDD     → exclusive end (subtract 1 day)
+URL       → canonical event page on taterman.at (source_url)
+LOCATION  → "Venue, [Street,] City, PLZ, Österreich"
+CATEGORIES → "Bundesland,Markt,<Province>" or "Markt,<Theme>"
+```
+
+**LOCATION parsing:**
+
+The LOCATION value follows the pattern `Venue, [Street,] City, PLZ, Österreich`.
+Split by `", "` → scan for a 4-digit PLZ; city = part immediately before PLZ.
+If that part is an Austrian province name, city is set to None (Nominatim
+geocodes from PLZ alone).
+
+Provinces excluded from city field: `Niederösterreich`, `Oberösterreich`,
+`Steiermark`, `Tirol`, `Vorarlberg`, `Kärnten`, `Burgenland`, `NÖ`, `OÖ`.
+Wien and Salzburg are kept (both province and city).
+
+**Market-type detection (SUMMARY keyword scan):**
+
+| Keyword | market_type |
+|---|---|
+| `adventmarkt`, `weihnacht`, `advent` | `christmas` |
+| `wikinger`, `viking` | `viking` |
+| `renaissance` | `renaissance` |
+| `fantasy` | `fantasy` |
+| everything else | `medieval` |
+
+**Known quirks:**
+- taterman.at uses the non-standard `DTSTART;TZID=Europe/Vienna;VALUE=DATE:...`
+  combination — RFC 5545 forbids TZID on VALUE=DATE properties, but the plugin
+  emits it anyway. The `icalendar` library returns a timezone-aware `datetime`
+  instead of a plain `date`; the adapter detects all-day via `dtstart.params.get("VALUE") == "DATE"`.
+- DTEND for all-day events is exclusive (RFC 5545 §3.6.1) — the adapter
+  subtracts 1 day to store the actual last day of the event.
+- Country is always `AT` (all taterman events are Austrian).
+- The feed covers all years since 2014; adapter filters to current + next year.
 
 ---
 
