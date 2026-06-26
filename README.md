@@ -17,6 +17,7 @@
 **Note: projected is generated with AI.**
 
 **License: GPLv3 or later. See `LICENSE`.**
+> *"Free as in freedom — and as in the freedom to roam medieval markets."*
 
 ### current state web UI
 ![](media/currentStateWebUi.png)
@@ -372,19 +373,3 @@ See `docs/architecture.md` for C4 container and component diagrams.
 │  - geocoding_cache   │  └───────────────────────────────┘
 └──────────────────────┘
 ```
-
----
-
-## current state web UI
-![](media/currentStateWebUi.png)
-
----
-
-## License
-
-RitterRadar is free software licensed under the
-[GNU General Public License v3.0](LICENSE) or any later version.
-
-Copyright (C) 2026 Marcel Petrick <mail@marcelpetrick.it>
-
-> *"Free as in freedom — and as in the freedom to roam medieval markets."*
