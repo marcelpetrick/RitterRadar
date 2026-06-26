@@ -1,52 +1,52 @@
-FO:     Stopping reloader process [640275]
-❯ ./scripts/start_dev.sh
-==> Starting RitterRadar [DEV] at http://127.0.0.1:13370
-==> Auto-reload enabled — file changes restart the server automatically.
-==> Press Ctrl+C to stop.
-INFO:     Will watch for changes in these directories: ['/home/mpetrick/repos/RitterRadar/src']
-INFO:     Uvicorn running on http://127.0.0.1:13370 (Press CTRL+C to quit)
-INFO:     Started reloader process [665957] using WatchFiles
-INFO:     Started server process [665962]
-INFO:     Waiting for application startup.
-21:18:53 INFO     ritterradar.main — RitterRadar starting up…
-21:18:53 INFO     ritterradar.main — Database tables ready
-21:18:53 INFO     ritterradar.crawler.queue — CrawlQueue: sources seeded from config/sources.yaml
-21:18:53 INFO     ritterradar.crawler.queue — CrawlQueue: enqueued 3 jobs
-21:18:53 INFO     ritterradar.crawler.queue — CrawlQueue: started 3 workers
-21:18:53 INFO     ritterradar.main — Crawler queue started
-21:18:53 INFO     ritterradar.crawler.worker — Worker 0: crawling Spectaculum.de
-21:18:53 INFO     ritterradar.crawler.worker — Worker 1: crawling Mittelalterkalender.info
-21:18:53 INFO     ritterradar.crawler.worker — Worker 2: crawling Vehi Mercatus Marktkalender
-INFO:     Application startup complete.
-21:18:54 INFO     httpx — HTTP Request: GET https://www.mittelalterkalender.info/mittelaltermarkt/mittelalterfeste-2026-nach-datum.php "HTTP/1.1 200 OK"
-21:18:54 INFO     ritterradar.crawler.adapters.mittelalterkalender_info — Mittelalterkalender.info: 808 rows found for 2026
-21:18:55 INFO     httpx — HTTP Request: GET https://vehi-mercatus.de/marktkalender/?ansicht=liste&land=Deutschland&jahr=2026&seite=1 "HTTP/1.1 301 Moved Permanently"
-21:18:55 INFO     httpx — HTTP Request: GET https://www.spectaculum.de "HTTP/1.1 200 OK"
-21:18:55 INFO     httpx — HTTP Request: GET https://vehi-mercatus.de/marktkalender/?ansicht=liste&jahr=2026&land=Deutschland&seite=1 "HTTP/1.1 200 OK"
-21:18:55 INFO     ritterradar.crawler.adapters.spectaculum — Spectaculum.de (MPS): scraped 9 events
-21:18:56 INFO     ritterradar.crawler.worker — Worker 0: Spectaculum.de done — 9 found, 0 inserted, 9 updated
-21:18:56 INFO     httpx — HTTP Request: GET https://www.mittelalterkalender.info/mittelaltermarkt/mittelalterfeste-2027-nach-datum.php "HTTP/1.1 302 Found"
-21:18:56 INFO     httpx — HTTP Request: GET https://www.mittelalterkalender.info/mittelaltermarkt/fehlerseite.php "HTTP/1.1 200 OK"
-21:18:56 INFO     ritterradar.crawler.adapters.mittelalterkalender_info — Mittelalterkalender.info: 0 rows found for 2027
-21:18:56 INFO     ritterradar.crawler.adapters.mittelalterkalender_info — Mittelalterkalender.info: scraped 806 events total
-21:18:57 INFO     httpx — HTTP Request: GET https://vehi-mercatus.de/marktkalender/?ansicht=liste&land=Deutschland&jahr=2026&seite=2 "HTTP/1.1 301 Moved Permanently"
-21:18:57 INFO     httpx — HTTP Request: GET https://vehi-mercatus.de/marktkalender/?ansicht=liste&jahr=2026&land=Deutschland&seite=2 "HTTP/1.1 200 OK"
-21:18:58 INFO     httpx — HTTP Request: GET https://vehi-mercatus.de/marktkalender/?ansicht=liste&land=Deutschland&jahr=2026&seite=3 "HTTP/1.1 301 Moved Permanently"
-21:18:59 INFO     httpx — HTTP Request: GET https://vehi-mercatus.de/marktkalender/?ansicht=liste&jahr=2026&land=Deutschland&seite=3 "HTTP/1.1 200 OK"
-21:19:00 INFO     httpx — HTTP Request: GET https://vehi-mercatus.de/marktkalender/?ansicht=liste&land=Deutschland&jahr=2026&seite=4 "HTTP/1.1 301 Moved Permanently"
-21:19:00 INFO     httpx — HTTP Request: GET https://vehi-mercatus.de/marktkalender/?ansicht=liste&jahr=2026&land=Deutschland&seite=4 "HTTP/1.1 200 OK"
-21:19:01 INFO     httpx — HTTP Request: GET https://vehi-mercatus.de/marktkalender/?ansicht=liste&land=Deutschland&jahr=2026&seite=5 "HTTP/1.1 301 Moved Permanently"
-INFO:     127.0.0.1:55030 - "GET / HTTP/1.1" 200 OK
-21:19:01 INFO     httpx — HTTP Request: GET https://vehi-mercatus.de/marktkalender/?ansicht=liste&jahr=2026&land=Deutschland&seite=5 "HTTP/1.1 200 OK"
-INFO:     127.0.0.1:55030 - "GET /static/css/ritterradar.css HTTP/1.1" 304 Not Modified
-INFO:     127.0.0.1:55032 - "GET /static/js/map.js HTTP/1.1" 304 Not Modified
-INFO:     127.0.0.1:55048 - "GET /static/js/detail-panel.js HTTP/1.1" 304 Not Modified
-INFO:     127.0.0.1:55044 - "GET /static/js/filters.js HTTP/1.1" 304 Not Modified
-INFO:     127.0.0.1:55054 - "GET /static/js/crawler-status.js HTTP/1.1" 304 Not Modified
-21:19:02 INFO     httpx — HTTP Request: GET https://vehi-mercatus.de/marktkalender/?ansicht=liste&land=Deutschland&jahr=2026&seite=6 "HTTP/1.1 301 Moved Permanently"
-21:19:02 INFO     httpx — HTTP Request: GET https://vehi-mercatus.de/marktkalender/?ansicht=liste&jahr=2026&land=Deutschland&seite=6 "HTTP/1.1 200 OK"
-21:19:02 INFO     ritterradar.crawler.adapters.vehi_mercatus — Vehi Mercatus Marktkalender: scraped 287 events so far (after year 2026)
-21:19:04 INFO     httpx — HTTP Request: GET https://vehi-mercatus.de/marktkalender/?ansicht=liste&land=Deutschland&jahr=2027&seite=1 "HTTP/1.1 301 Moved Permanently"
-21:19:04 INFO     httpx — HTTP Request: GET https://vehi-mercatus.de/marktkalender/?ansicht=liste&jahr=2027&land=Deutschland&seite=1 "HTTP/1.1 200 OK"
-21:19:04 INFO     ritterradar.crawler.adapters.vehi_mercatus — Vehi Mercatus Marktkalender: scraped 287 events so far (after year 2027)
-21:19:04 INFO     ritterradar.crawler.adapters.vehi_mercatus — Vehi Mercatus Marktkalender: scraped 287 events total
+# RitterRadar — Review Findings
+
+Format: severity-rated findings from periodic review passes.  
+**High** → fixed immediately in the same session.  
+**Medium** → scheduled for next loop.  
+**Low** → tracked here; addressed when convenient.
+
+---
+
+## Review Pass R1 — 2026-06-25 (post Phase 5/6)
+
+| ID | Severity | Component | Finding | Status |
+|---|---|---|---|---|
+| R1-001 | HIGH | `crawler/worker.py` | DB session not closed on exception path — `DetachedInstanceError` when reading CrawlJob attributes after session closed | **Fixed** v0.0.16 — attributes read within session context before `with` block exits |
+| R1-002 | HIGH | All adapters | `__version__` / `_VERIFIED_DATE` declared before imports → ruff E402 on all subsequent imports (88 violations total) | **Fixed** v0.0.34 — moved to after `logger = logging.getLogger(__name__)` |
+| R1-003 | HIGH | `crawler/worker.py` | Cross-source duplicate markets — same event inserted 3× from different sources (1971 rows → 1859 after cleanup) | **Fixed** v0.0.32 — three-phase upsert dedup (PLZ → city → source_url) |
+| R1-004 | HIGH | `taterman_at.py` | `_coerce_date` returned `datetime` not `date` — `isinstance(datetime, date)` is True (datetime subclasses date) | **Fixed** v0.0.34 — check for callable `.date()` method first |
+| R1-005 | HIGH | `taterman_at.py` | All-day detection failed for non-standard `DTSTART;TZID=...;VALUE=DATE` (RFC 5545 violation by site) — icalendar returns timezone-aware `datetime` instead of `date` | **Fixed** v0.0.34 — detect all-day via `dtstart.params.get("VALUE") == "DATE"` |
+| R1-006 | MEDIUM | `api/markets.py` | No pagination on `/api/markets` — returns all matching records at once; at 2000+ markets this may be slow | **Open** — acceptable at SQLite scale; add `limit`/`offset` params if latency grows |
+| R1-007 | MEDIUM | Frontend | No "set home on map" click-to-pin interaction — text geocode is the only input method | **Open / Deferred** — text input + Nominatim geocode covers 95% of use cases |
+| R1-008 | MEDIUM | `crawler/adapters/` | Adapter integration tests use no HTML fixtures — only API-level tests exist; a site redesign would break adapters silently | **Open** — fixture-based adapter tests planned for next test pass |
+| R1-009 | LOW | `api/main.py` | FastAPI `version` field was hardcoded to `"0.0.12"` — stale after every commit | **Fixed** v0.0.37 — reads from `importlib.metadata.version("ritterradar")` |
+| R1-010 | LOW | Frontend | Leaflet "Leaflet" branding prefix in attribution bar cluttered the map corner | **Fixed** v0.0.36 — `attributionControl.setPrefix('')`; OSM credit retained |
+| R1-011 | LOW | `vehi_mercatus.py` | `href` ternary was over 100 chars and used unused `datetime` import | **Fixed** v0.0.34 — E501 unwrapped, F401 removed |
+| R1-012 | LOW | All adapters | `datetime.timezone.utc` used in several places instead of Python 3.11+ `datetime.UTC` alias | **Fixed** v0.0.34 — UP017 applied throughout |
+
+---
+
+## Review Pass R2 — 2026-06-26 (post Phase 7)
+
+| ID | Severity | Component | Finding | Status |
+|---|---|---|---|---|
+| R2-001 | MEDIUM | `pyproject.toml` | Coverage threshold set to 80%; vision document specifies 90% goal | **Open** — adapter fixture tests needed to close the gap |
+| R2-002 | LOW | `documents/02_issues.md` | File contained raw uvicorn log output instead of structured findings | **Fixed** 2026-06-26 — replaced with this document |
+| R2-003 | LOW | Slider UX | Umkreis slider capped at 500 km — unusable for Austria/Switzerland events | **Fixed** v0.0.36 — range extended to 0–1024 km, step 8 |
+| R2-004 | LOW | Sidebar UX | "Suchen" button was next to the Heimatort input field (side-by-side); visually displaced | **Fixed** v0.0.36 — button moved below input (`flex-direction: column`) |
+| R2-005 | LOW | Legend | "Unsicherer Ort !" label was informal and used a stray exclamation mark | **Fixed** v0.0.37 — renamed to "Ungefährer Ort" |
+| R2-006 | LOW | Legend / Markttyp | No explanation of what each category means or which sources contribute to it | **Fixed** v0.0.36 — `title` attribute tooltips added to all legend entries and type checkboxes |
+| R2-007 | LOW | Header | No visible version number in the UI — hard to know which build is running | **Fixed** v0.0.37 — tagline shows `· v{version}` via Jinja2 template context |
+
+---
+
+## Open Items (backlog)
+
+| ID | Severity | Component | Finding |
+|---|---|---|---|
+| R1-006 | MEDIUM | `api/markets.py` | No pagination on `/api/markets` |
+| R1-007 | MEDIUM | Frontend | No "set home on map" click-to-pin |
+| R1-008 | MEDIUM | `tests/` | Adapter-level HTML fixture tests not written |
+| R2-001 | MEDIUM | `pyproject.toml` | Coverage at 80%; goal is 90% |
+| — | LOW | `crawler/worker.py` | `original_text` from scraped HTML is stored raw; no HTML sanitisation |
+| — | LOW | `crawler/http_client.py` | SSRF guard is domain-drift only; no explicit allowlist |

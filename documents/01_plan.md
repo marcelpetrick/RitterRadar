@@ -448,105 +448,117 @@ Each adapter must handle:
 
 ## 12. Implementation Phases
 
-### Phase 0 — Project Skeleton (version 0.0.1 → ~0.0.5)
+> **Status as of v0.0.37 (2026-06-26):** Phases 0–7 complete. Phase 8 ongoing.
+> Version numbers in parentheses are approximate actuals, not original estimates.
 
-- [ ] `pyproject.toml` with all pinned dependencies, version `0.0.1`
-- [ ] `justfile` with: `just dev`, `just test`, `just lint`, `just fmt`, `just docs`, `just migrate`
-- [ ] `.gitignore` (Python, SQLite, .env, `__pycache__`, `.venv`, `dist/`, `docs/_build/`)
-- [ ] `LICENSE` (GPLv3)
-- [ ] `CHANGELOG.md` (Keep a Changelog format)
-- [ ] `.env.example`
-- [ ] ruff config in `pyproject.toml`
-- [ ] mypy config in `pyproject.toml` (strict mode)
-- [ ] pytest config with coverage threshold = 90
-- [ ] Sphinx `docs/source/conf.py`
-- [ ] Alembic init
-- [ ] `src/ritterradar/__init__.py` with `__version__ = "0.0.1"`
+### Phase 0 — Project Skeleton ✅ COMPLETE (v0.0.1–0.0.4)
 
-### Phase 1 — Data Layer (version ~0.0.6 → ~0.0.15)
+- [x] `pyproject.toml` with all pinned dependencies, version `0.0.1`
+- [x] `justfile` with: `just dev`, `just test`, `just lint`, `just fmt`, `just docs`, `just migrate`
+- [x] `.gitignore` (Python, SQLite, .env, `__pycache__`, `.venv`, `dist/`, `docs/_build/`)
+- [x] `LICENSE` (GPLv3)
+- [x] `CHANGELOG.md` (Keep a Changelog format)
+- [x] `.env.example`
+- [x] ruff config in `pyproject.toml`
+- [x] mypy config in `pyproject.toml` (strict mode)
+- [x] pytest config with coverage threshold (set to 80%; 90% remains a goal — see Phase 8)
+- [x] Sphinx `docs/source/conf.py`
+- [x] Alembic init
+- [x] `src/ritterradar/__init__.py` — version read via `importlib.metadata`
 
-- [ ] SQLModel models: Market, Source, CrawlJob, UserSettings, GeocodingCache
-- [ ] Alembic initial migration
-- [ ] `database/engine.py` — engine creation, `create_tables()`
-- [ ] `database/session.py` — `get_session()` FastAPI dependency
-- [ ] Unit tests for all models (field defaults, constraints, repr)
-- [ ] Haversine utility + tests (known-distance pairs)
+### Phase 1 — Data Layer ✅ COMPLETE (v0.0.5–0.0.9)
 
-### Phase 2 — Geocoding Service (version ~0.0.16 → ~0.0.20)
+- [x] SQLModel models: Market, Source, CrawlJob, UserSettings, GeocodingCache
+- [x] Alembic initial migration
+- [x] `database/engine.py` — engine creation, `create_tables()`
+- [x] `database/session.py` — `get_session()` FastAPI dependency
+- [x] Unit tests for all models (field defaults, constraints, repr)
+- [x] Haversine utility + tests (known-distance pairs)
 
-- [ ] `geocoding/nominatim.py` — async geocoder with cache lookup/write
-- [ ] `geocoding/haversine.py`
-- [ ] Tests with mocked Nominatim responses
-- [ ] Cache hit/miss test
+### Phase 2 — Geocoding Service ✅ COMPLETE (v0.0.10–0.0.11)
 
-### Phase 3 — Crawler Infrastructure (version ~0.0.21 → ~0.0.35)
+- [x] `geocoding/nominatim.py` — async geocoder with SQLite cache
+- [x] `geocoding/haversine.py`
+- [x] Tests with mocked Nominatim responses
+- [x] Cache hit/miss test
 
-- [ ] `crawler/base_adapter.py` — ABC + `MarketData` dataclass
-- [ ] `crawler/http_client.py` — PoliteHttpClient (delay, backoff, UA)
-- [ ] `crawler/queue.py` — CrawlQueue with asyncio.Queue
-- [ ] `crawler/worker.py` — CrawlWorker (failure isolation, DB write, geocode)
-- [ ] `crawler/registry.py` — adapter registry
-- [ ] Unit tests for queue state transitions
-- [ ] Unit tests for worker (mocked adapter, DB, geocoder)
-- [ ] Integration test: full crawl cycle with stub adapter
+### Phase 3 — Crawler Infrastructure ✅ COMPLETE (v0.0.12–0.0.16)
 
-### Phase 4 — Crawler Adapters (version ~0.0.36 → ~0.0.60)
+- [x] `crawler/base_adapter.py` — ABC + `MarketData` dataclass (with optional lat/lon for pre-geocoded data)
+- [x] `crawler/http_client.py` — PoliteHttpClient (delay 0.5–2 s, exponential backoff, domain-drift guard)
+- [x] `crawler/queue.py` — CrawlQueue with asyncio.Queue
+- [x] `crawler/worker.py` — CrawlWorker with three-phase dedup upsert and failure isolation
+- [x] `crawler/registry.py` — `@register` decorator adapter registry
+- [x] Unit tests for queue state transitions
+- [x] Unit tests for worker (mocked adapter, DB, geocoder)
+- [x] Integration test: full crawl cycle with stub adapter
 
-Per adapter: implement, test with saved HTML fixture, verify extracted fields.
+### Phase 4 — Crawler Adapters ✅ COMPLETE (v0.0.17–0.0.35)
 
-- [ ] `adapters/mittelalterfeste.py`
-- [ ] `adapters/schwerttanz.py`
-- [ ] `adapters/spectaculum.py`
-- [ ] `adapters/ritterschaft.py`
-- [ ] `adapters/mittelalterspektakel.py`
-- [ ] At least 3 more adapters for identified sources
-- [ ] Adapter integration tests (HTML fixtures, no network)
+7 active adapters; 4 originally planned sources are dead (domains expired/parked).
 
-### Phase 5 — FastAPI Application (version ~0.0.61 → ~0.0.75)
+- [x] `adapters/spectaculum.py` — MPS homepage nav scraper
+- [x] `adapters/mittelalterkalender_info.py` — Semantic UI table, 808 events/year
+- [x] `adapters/vehi_mercatus.py` — paginated list, 287 DE events/year
+- [x] `adapters/marktkalendarium.py` — plain HTML table, 334 events/year
+- [x] `adapters/mittelaltermarkt_online.py` — WordPress Events Calendar REST API, 531 events; pre-geocoded
+- [x] `adapters/taterman_at.py` — iCal feed (RFC 5545), 26 Austrian events/year
+- [x] `adapters/trollfelsen.py` — vendor tour schedule HTML cards, 21 confirmed events/year
+- [x] `adapters/generic_table.py` — fallback HTML table parser
+- [ ] Adapter integration tests (HTML fixtures, no network) — **backlog** (API tests exist; fixture-based adapter tests not yet written)
+- ~~`adapters/mittelalterfeste.py`~~ — domain expired (→ sedo.com)
+- ~~`adapters/schwerttanz.py`~~ — TLS cert mismatch; domain returns wrong host
+- ~~`adapters/ritterschaft.py`~~ — domain hijacked (→ droids.de content)
+- ~~`adapters/mittelalterspektakel.py`~~ — domain for sale, JS spinner
 
-- [ ] `main.py` — app + lifespan (startup: load sources, seed DB, start crawler queue)
-- [ ] `config.py` — AppSettings (YAML source path, worker count, DB path, etc.)
-- [ ] `api/markets.py` — filtered market listing + hide toggle
-- [ ] `api/sources.py` — source listing
-- [ ] `api/crawl.py` — status + trigger
-- [ ] `api/settings.py` — user settings CRUD + geocode endpoint
-- [ ] Static file serving for frontend
-- [ ] Full pytest-asyncio API tests (TestClient)
-- [ ] Error handling middleware (never expose stack traces to client)
+### Phase 5 — FastAPI Application ✅ COMPLETE (v0.0.18–0.0.22)
 
-### Phase 6 — Frontend (version ~0.0.76 → ~0.0.100)
+- [x] `main.py` — app + lifespan; version from `importlib.metadata`
+- [x] `config.py` — AppSettings (YAML source path, worker count, DB path, etc.)
+- [x] `api/markets.py` — filtered market listing + hide toggle + Haversine distance
+- [x] `api/sources.py` — source listing
+- [x] `api/crawl.py` — status + trigger
+- [x] `api/settings.py` — user settings CRUD + geocode endpoint
+- [x] Static file serving for frontend
+- [x] Full pytest-asyncio API tests (48 tests, StaticPool in-memory SQLite)
+- [ ] Error handling middleware — **backlog** (FastAPI default exception handling is in place; custom middleware not yet added)
 
-- [ ] `base.html` — GPLv3 comment, meta, CSS/JS includes
-- [ ] `index.html` — layout: map full-screen, left sidebar, bottom panel, right detail panel
-- [ ] `medieval-theme.css` — color palette, fonts, textures, motifs
-- [ ] `ritterradar.css` — layout, responsive adjustments
-- [ ] `map.js` — Leaflet init, custom markers, hover tooltip, click handler
-- [ ] `filters.js` — month slider, distance slider, type checkboxes; builds query params
-- [ ] `detail-panel.js` — renders click detail; hide/unhide button
-- [ ] `crawler-status.js` — polls /api/crawl/status; updates progress strip
-- [ ] Auto-refresh polling for market data
-- [ ] Home location widget (text input + "set on map" pin mode)
-- [ ] Uncertain geocode visual indicator
+### Phase 6 — Frontend ✅ COMPLETE (v0.0.23–0.0.37)
 
-### Phase 7 — Documentation (version ~0.0.101 → ~0.0.110)
+- [x] `base.html` — GPLv3 comment, meta, CSS/JS includes, Google Fonts
+- [x] `index.html` — layout: map full-screen, left sidebar, bottom status bar, right detail panel
+- [x] `ritterradar.css` — full medieval theme (dark wood, aged gold, burgundy, IM Fell English)
+- [x] `map.js` — Leaflet init, custom div-icon markers, hover tooltip, click handler; OSM attribution restyled
+- [x] `filters.js` — month selectors, distance slider (0–1024 km), type checkboxes; builds query params
+- [x] `detail-panel.js` — renders click detail; hide button
+- [x] `crawler-status.js` — polls /api/crawl/status; updates progress strip
+- [x] `activity-log.js` — collapsible live event log panel in map corner
+- [x] Auto-refresh polling every 8 s for market data
+- [x] Home location widget (text input + Suchen button below input; geocode on Enter)
+- [x] Uncertain geocode visual indicator (orange `!` badge on marker; "Ungefährer Ort" in legend)
+- [x] Tooltips on all legend and type-filter items (meaning + source attribution)
+- [x] Live version number displayed in header tagline
+- [ ] "Set home on map" click-to-pin mode — **deferred** (text input + geocode is sufficient)
+- [ ] `medieval-theme.css` separate file — **not needed** (merged into single `ritterradar.css`)
 
-- [ ] `README.md` — purpose, installation, configuration, running, adapter development, license
-- [ ] `docs/architecture.md` — C4 Context + Container + Component diagrams (Mermaid)
-- [ ] `docs/adapter-guide.md` — step-by-step with annotated example adapter
-- [ ] Sphinx autodoc for all public classes and functions
-- [ ] `CHANGELOG.md` — entries for each phase
+### Phase 7 — Documentation ✅ COMPLETE (v0.0.27–0.0.37)
 
-### Phase 8 — Quality Loop (ongoing)
+- [x] `README.md` — medieval English intro + full install-to-run workflow
+- [x] `docs/architecture.md` — 8 Mermaid diagrams (C4 L1–L3, ER diagram, module graph, HTTP client flow, active sources, directory layout)
+- [x] `docs/source/adapter_guide.rst` — step-by-step adapter development guide
+- [x] Sphinx autodoc configured for all public classes and functions
+- [x] `CHANGELOG.md` — full history from v0.0.0 to current
+- [x] `documents/03_sources.md` — per-adapter structure, quirks, architecture
+- [x] `documents/02_issues.md` — review findings tracker
 
-- [ ] Run coverage report; identify gaps; add missing tests until ≥ 90 %
-- [ ] Run `ruff check --select ALL`; fix all findings
-- [ ] Run mypy strict; fix all type errors
-- [ ] Review cycle pass: rate findings high / medium / low
-  - High → fix immediately in same session
-  - Medium → file in next loop
-  - Low → track in CHANGELOG / TODO
-- [ ] Performance: profile crawler and API under 5000 market records
-- [ ] Security: no shell injection in geocoding; no SSRF in crawler (allowlist or warn); sanitise any HTML from sources before storing
+### Phase 8 — Quality Loop 🔄 ONGOING
+
+- [x] `ruff check src/` — **0 violations** (fully lint-clean)
+- [x] mypy strict — passes with documented overrides for untyped third-party libs
+- [ ] Coverage ≥ 90% — **current threshold 80%; goal 90% not yet met** (48 tests pass but adapter-level fixtures missing)
+- [ ] Review cycle pass — see `documents/02_issues.md` for open findings
+- [ ] Performance profile under 5 000+ market records
+- [ ] Security review: SSRF guard on PoliteHttpClient domain-drift (partial); HTML sanitisation not yet applied to `original_text`
 
 ---
 

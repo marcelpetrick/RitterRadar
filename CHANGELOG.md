@@ -8,6 +8,16 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.0.38] — 2026-06-26
+### Docs
+- **README**: intro rewritten in medieval English; features table updated (multi-format parsing,
+  pre-geocoded fast path, adapter versioning, tooltips, version in header, 0–1024 km slider)
+- **documents/01_plan.md**: all Phase 0–7 checklist items marked complete with actual version
+  numbers; Phase 8 open items accurately reflect current state (lint clean, coverage 80%,
+  adapter fixture tests missing)
+- **documents/02_issues.md**: replaced raw uvicorn log dump with structured R1/R2 review
+  findings tables (severity rated; fixed items linked to fix versions; open backlog listed)
+
 ## [0.0.37] — 2026-06-26
 ### Changed
 - Header tagline now shows live version number (v{{ version }} via Jinja2 context)

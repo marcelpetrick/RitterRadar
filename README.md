@@ -1,18 +1,14 @@
 # ⚔ RitterRadar
 
-**Discover German medieval markets, Renaissance festivals, Viking fairs, and
-fantasy markets on a beautiful interactive map.**
-
-RitterRadar crawls configured web sources in the background, geocodes event
-locations, and displays results on a Leaflet/OpenStreetMap map with medieval
-visual styling.  Everything runs locally — no cloud, no accounts, no data
-leaves your machine.
-
-**Author: Marcel Petrick <mail@marcelpetrick.it>**  
-**License: GPLv3 or later. See `LICENSE`.**
-
-### current state web UI
-![](media/currentStateWebUi.png)
+> *Harken, good traveller, and lend thine ear!*
+>
+> *RitterRadar is a cunning instrument, forged in the fires of Python, to aid thee in thy noble quest: the discovery of medieval markets, Renaissance fairs, Viking spectacles, and Christmas revelries of the ancient style — across the German lands and beyond.*
+>
+> *This tool doth dispatch tireless web-crawling agents into the vast digital wilderness. They return laden with tidings of forthcoming events — their names, their dates, their whereabouts — and store all within a local treasury of SQLite.*
+>
+> *Upon thine own machine it doth render a most beautiful interactive map, whereupon thou mayest **filter by period** (which months thou wishest to survey) and **filter by space** (thy home position and a radius of thy choosing, from a stone's throw to 1024 leagues). Click upon any marker to learn the full particulars. The crawler runneth in the background; the map refresheth on its own accord.*
+>
+> *No cloud. No accounts. No data leaveth thy machine. Thus: a helper tool that crawleth the web with custom crawlers, presenteth the findings, and alloweth thee to sift them by time and by distance. Nothing more, nothing less — but fashioned with care.*
 
 ---
 
@@ -22,16 +18,19 @@ leaves your machine.
 |---|---|
 | **Auto-crawling** | Background workers harvest events from all configured sources on startup |
 | **7 active adapters** | mittelalterkalender.info, vehi-mercatus.de, spectaculum.de, marktkalendarium.de, mittelaltermarkt.online, taterman.at, trollfelsen.de |
-| **REST API adapter** | mittelaltermarkt.online uses WordPress Events Calendar JSON API — no HTML scraping |
-| **Deduplication** | Three-phase upsert (PLZ → city → source_url) merges the same event from multiple sources into one record |
-| **Extensible** | Generic table adapter + guide for adding any new site; each adapter carries its own SemVer |
+| **Multi-format parsing** | HTML scraping (BeautifulSoup), REST API (WordPress Events Calendar), iCal feeds (RFC 5545) |
+| **Deduplication** | Three-phase upsert (PLZ → city → source_url) merges the same event from multiple sources |
+| **Pre-geocoded fast path** | mittelaltermarkt.online supplies lat/lon directly — Nominatim skipped for ~530 events per crawl |
+| **Adapter versioning** | Each adapter carries `__version__` + `_VERIFIED_DATE` for traceability |
 | **Geocoding** | Nominatim (OpenStreetMap) with SQLite cache and rate-limit compliance |
-| **Distance filter** | Haversine straight-line distance from your home pin |
-| **Time filter** | Month-range slider covering current month through next 12 months |
+| **Distance filter** | Haversine straight-line distance, 0–1024 km radius from home pin |
+| **Time filter** | Month-range selector, current month through next 12 months |
 | **Type filter** | Medieval · Renaissance · Viking · Fantasy · Christmas |
 | **Detail panel** | Click a marker for name, dates, location, program, source link, hide button |
 | **Crawler status** | Live badge counts + per-job log in the status bar |
-| **Medieval UI** | Dark wood + aged gold + burgundy theme with IM Fell English font |
+| **Activity log** | Collapsible live log panel in the map corner |
+| **Medieval UI** | Dark wood + aged gold + burgundy theme with IM Fell English font; version shown in header |
+| **Tooltips** | Hover over any legend or type-filter item for source attribution and meaning |
 
 ---
 
@@ -131,9 +130,11 @@ The app:
 | Action | Effect |
 |---|---|
 | Enter postal code / city in **Heimatort** | Geocodes and sets your home pin; enables distance filter |
-| Drag **Umkreis** slider | Limits markers to N km radius |
+| Click **Suchen** | Confirm the home location entry |
+| Drag **Umkreis** slider (0–1024 km) | Limits markers to N km radius from home |
 | Choose months in **Zeitraum** | Filters by event start date |
 | Check/uncheck **Markttyp** boxes | Show/hide event categories |
+| Hover a type checkbox or legend item | Shows tooltip with category meaning and data sources |
 | Click **Karte aktualisieren** | Re-applies all filters |
 | **Hover** a marker | Shows name and date range |
 | **Click** a marker | Opens detail panel on the right |
@@ -212,7 +213,6 @@ class MySiteAdapter(AbstractCrawlerAdapter):
         results = []
         for article in soup.find_all("article", class_="event"):
             name = article.find("h2").get_text(strip=True)
-            # parse start/end dates from the article, set city/postal_code for dedup
             results.append(MarketData(
                 name=name,
                 start_date=date(2026, 7, 1),   # replace with real parsing
@@ -361,6 +361,11 @@ See `docs/architecture.md` for C4 container and component diagrams.
 │  - geocoding_cache   │  └───────────────────────────────┘
 └──────────────────────┘
 ```
+
+---
+
+## current state web UI
+![](media/currentStateWebUi.png)
 
 ---
 
