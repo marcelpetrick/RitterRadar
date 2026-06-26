@@ -28,13 +28,13 @@
         <div class="home-input-group">
           <input id="home-input" type="text" placeholder="PLZ oder Stadt eingeben…"
                  autocomplete="off" />
-          <button id="btn-geocode" class="btn-primary btn-sm">Suchen</button>
+          <button id="btn-geocode" class="btn-primary btn-sm btn-full">Suchen</button>
         </div>
         <div id="home-status" class="home-status hidden"></div>
         <label class="slider-label">
           Umkreis: <strong id="radius-value">100</strong> km
         </label>
-        <input id="radius-slider" type="range" min="10" max="500" value="100" step="10" />
+        <input id="radius-slider" type="range" min="0" max="1024" value="100" step="8" />
       </div>
 
       <div class="sidebar-section">
@@ -50,19 +50,24 @@
       <div class="sidebar-section">
         <h2 class="sidebar-title">🏰 Markttyp</h2>
         <div id="type-filters" class="type-filter-grid">
-          <label class="type-check">
+          <label class="type-check"
+            title="Klassische Mittelaltermärkte und Burgfeste.&#10;Quellen: mittelalterkalender.info, vehi-mercatus.de, spectaculum.de, marktkalendarium.de, mittelaltermarkt.online, trollfelsen.de">
             <input type="checkbox" value="medieval" checked /> Mittelalter
           </label>
-          <label class="type-check">
+          <label class="type-check"
+            title="Renaissance-Märkte und historische Feste.&#10;Quellen: mittelaltermarkt.online, mittelalterkalender.info">
             <input type="checkbox" value="renaissance" checked /> Renaissance
           </label>
-          <label class="type-check">
+          <label class="type-check"
+            title="Wikingermärkte und nordische Feste.&#10;Quellen: mittelaltermarkt.online, taterman.at">
             <input type="checkbox" value="viking" checked /> Wikinger
           </label>
-          <label class="type-check">
+          <label class="type-check"
+            title="Fantasy-Märkte und mittelalterlich inspirierte Events.&#10;Quelle: mittelaltermarkt.online">
             <input type="checkbox" value="fantasy" checked /> Fantasy
           </label>
-          <label class="type-check">
+          <label class="type-check"
+            title="Historische Weihnachts- und Adventmärkte im mittelalterlichen Stil.&#10;Quellen: mittelaltermarkt.online, taterman.at, mittelalterkalender.info">
             <input type="checkbox" value="christmas" checked /> Weihnacht
           </label>
         </div>
@@ -72,12 +77,18 @@
       <div class="sidebar-section">
         <h2 class="sidebar-title">🗺 Legende</h2>
         <div class="legend-grid">
-          <span class="legend-dot medieval"></span><span>Mittelalter</span>
-          <span class="legend-dot renaissance"></span><span>Renaissance</span>
-          <span class="legend-dot viking"></span><span>Wikinger</span>
-          <span class="legend-dot fantasy"></span><span>Fantasy</span>
-          <span class="legend-dot christmas"></span><span>Weihnacht</span>
-          <span class="legend-dot uncertain"></span><span>Unsicherer Ort !</span>
+          <span class="legend-dot medieval"></span>
+          <span title="Klassische Mittelaltermärkte und Burgfeste.&#10;Quellen: mittelalterkalender.info, vehi-mercatus.de, spectaculum.de, marktkalendarium.de, mittelaltermarkt.online, trollfelsen.de">Mittelalter</span>
+          <span class="legend-dot renaissance"></span>
+          <span title="Renaissance-Märkte und historische Feste.&#10;Quellen: mittelaltermarkt.online, mittelalterkalender.info">Renaissance</span>
+          <span class="legend-dot viking"></span>
+          <span title="Wikingermärkte und nordische Feste.&#10;Quellen: mittelaltermarkt.online, taterman.at">Wikinger</span>
+          <span class="legend-dot fantasy"></span>
+          <span title="Fantasy-Märkte und mittelalterlich inspirierte Events.&#10;Quelle: mittelaltermarkt.online">Fantasy</span>
+          <span class="legend-dot christmas"></span>
+          <span title="Historische Weihnachts- und Adventmärkte im mittelalterlichen Stil.&#10;Quellen: mittelaltermarkt.online, taterman.at, mittelalterkalender.info">Weihnacht</span>
+          <span class="legend-dot uncertain"></span>
+          <span title="Geocoding (Nominatim/OpenStreetMap) konnte keine genaue Adresse finden und lieferte nur einen ungefähren Standort. Der Marker kann um mehrere Kilometer vom echten Ort abweichen.">Unsicherer Ort !</span>
         </div>
       </div>
     </aside>

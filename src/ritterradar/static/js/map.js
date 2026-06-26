@@ -42,6 +42,9 @@ export function initMap() {
 
   markersLayer = L.layerGroup().addTo(map);
 
+  // Remove "Leaflet" branding prefix; keep mandatory OSM attribution text
+  if (map.attributionControl) map.attributionControl.setPrefix('');
+
   document.getElementById('map-loading')?.classList.add('hidden');
   _log('info', 'Karte geladen (OpenStreetMap)');
 }

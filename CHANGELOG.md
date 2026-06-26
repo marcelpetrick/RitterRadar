@@ -8,6 +8,16 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.0.36] — 2026-06-26
+### Changed
+- **Umkreis slider** extended from 10–500 km to 0–1024 km (step 8 km)
+- **Suchen button** moved below the Heimatort text field (was side-by-side)
+- **Tooltips** added to all Markttyp checkboxes and Legende entries — each item
+  now shows its meaning and which crawl sources contribute that category on hover
+- **Leaflet attribution** restyled to match the medieval theme (dark background,
+  gold link, 0.6 rem); "Leaflet" branding prefix removed — only the mandatory
+  OpenStreetMap credit remains visible in the map corner
+
 ## [0.0.35] — 2026-06-26
 ### Added
 - **New adapter: trollfelsen.de** (v0.1.0, verified 2026-06-26)

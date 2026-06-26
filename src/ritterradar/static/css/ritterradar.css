@@ -211,9 +211,10 @@ html, body {
   margin-bottom: 0.2rem;
 }
 
-/* Home input */
+/* Home input — stacked vertically so Suchen sits below the text field */
 .home-input-group {
   display: flex;
+  flex-direction: column;
   gap: 0.4rem;
 }
 
@@ -653,6 +654,19 @@ input[type="range"]::-moz-range-thumb {
   justify-content: center;
   transform: rotate(45deg);
 }
+
+/* Leaflet attribution — styled to match medieval theme; OSM credit is legally required */
+.leaflet-control-attribution {
+  background: rgba(26, 13, 4, 0.82) !important;
+  color: var(--text-muted) !important;
+  font-size: 0.6rem !important;
+  padding: 1px 5px !important;
+  border-top: 1px solid var(--gold-dim) !important;
+  border-left: 1px solid var(--gold-dim) !important;
+  border-radius: 3px 0 0 0 !important;
+}
+.leaflet-control-attribution a { color: var(--gold-dim) !important; }
+.leaflet-control-attribution a:hover { color: var(--gold) !important; }
 
 /* Leaflet popup */
 .leaflet-popup-content-wrapper {
