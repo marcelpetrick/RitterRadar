@@ -8,6 +8,12 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.0.37] — 2026-06-26
+### Changed
+- Header tagline now shows live version number (v{{ version }} via Jinja2 context)
+- FastAPI app version sourced from `importlib.metadata` instead of hardcoded string
+- Legend entry "Unsicherer Ort !" renamed to "Ungefährer Ort" (cleaner German; ! was redundant since the map marker already carries the indicator)
+
 ## [0.0.36] — 2026-06-26
 ### Changed
 - **Umkreis slider** extended from 10–500 km to 0–1024 km (step 8 km)

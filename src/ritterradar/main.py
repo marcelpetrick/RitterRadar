@@ -11,6 +11,7 @@ import logging
 import logging.config
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
+from importlib.metadata import version as _pkg_version
 from pathlib import Path
 
 from fastapi import FastAPI, Request
@@ -67,10 +68,12 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     logger.info("Crawler queue stopped")
 
 
+_VERSION = _pkg_version("ritterradar")
+
 app = FastAPI(
     title="RitterRadar",
     description="Discover German medieval markets on an interactive map",
-    version="0.0.12",
+    version=_VERSION,
     lifespan=lifespan,
     docs_url="/api/docs",
     redoc_url="/api/redoc",
@@ -86,7 +89,7 @@ templates = Jinja2Templates(directory=str(_TEMPLATES))
 @app.get("/", response_class=HTMLResponse, include_in_schema=False)
 async def index(request: Request) -> HTMLResponse:
     """Serve the main single-page application."""
-    return templates.TemplateResponse(request, "index.html", {})
+    return templates.TemplateResponse(request, "index.html", {"version": _VERSION})
 
 
 @app.get("/health", tags=["health"])
