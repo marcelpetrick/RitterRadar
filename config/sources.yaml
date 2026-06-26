@@ -56,6 +56,15 @@ sources:
     enabled: true
     crawl_interval_hours: 24
 
+  # Trollfelsen.de — vendor tour schedule (confirmed appearances only).
+  # ~21 confirmed events in 2026 with direct event-website source URLs.
+  # Single page at /termine; skips cards flagged "nicht bestätigt".
+  - name: "Trollfelsen.de"
+    url: "https://trollfelsen.de/termine"
+    adapter: "trollfelsen"
+    enabled: true
+    crawl_interval_hours: 24
+
   # Taterman.at — Austrian medieval-market info magazine.
   # ~26 events/year (2026) in iCal format; "Markt" category only.
   # Feed: /termin/categories/markt/?ical=1 (wp-events-plugin.com).

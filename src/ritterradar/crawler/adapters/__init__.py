@@ -13,5 +13,6 @@ from ritterradar.crawler.adapters import (  # noqa: F401
     schwerttanz,
     spectaculum,
     taterman_at,
+    trollfelsen,
     vehi_mercatus,
 )
