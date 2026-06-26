@@ -8,6 +8,15 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.0.35] — 2026-06-26
+### Added
+- **New adapter: trollfelsen.de** (v0.1.0, verified 2026-06-26)
+  - Vendor tour schedule: ~21 confirmed events in 2026
+  - Each card links directly to the event's own website (high-quality source_url)
+  - Skips cards flagged "Teilnahme noch nicht bestätigt" (unconfirmed)
+  - Location format "DE - 06217 Merseburg" → country + PLZ + city
+  - Coverage: Germany primarily; adapts to AT/CH cards when present
+
 ## [0.0.34] — 2026-06-26
 ### Added
 - **New adapter: taterman.at** (v0.1.0, verified 2026-06-26)

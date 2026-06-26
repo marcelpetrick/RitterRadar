@@ -1,6 +1,6 @@
 # RitterRadar — Crawler Sources Documentation
 
-Last verified: 2026-06-26 · 6 active sources · 4 disabled
+Last verified: 2026-06-26 · 7 active sources · 4 disabled
 
 ---
 
@@ -199,7 +199,58 @@ venue.geo_lng  → longitude (pre-geocoded, skips Nominatim)
 
 ---
 
-### 6. Taterman.at
+### 6. Trollfelsen.de
+
+| Property | Value |
+|---|---|
+| **Adapter** | `trollfelsen` · `__version__ = "0.1.0"` |
+| **Base URL** | https://trollfelsen.de |
+| **List URL** | `/termine` |
+| **Events/year** | ~21 confirmed (2026) |
+| **Coverage** | Germany primarily; Austria/Switzerland possible |
+| **Update frequency** | Updated when vendor confirms/adds appearances |
+
+**Page structure (class="event-card"):**
+
+```html
+<div class="event-card">
+  <div class="picture"><a href="EVENT_WEBSITE">...</a></div>
+  <div class="infos">
+    <h3>Event name</h3>
+    <div>
+      <div class="font-weight-bold">DD.MM.YYYY - DD.MM.YYYY</div>
+    </div>
+    <div>Mehr von: Organizer</div>
+    <div class="icons">...</div>   <!-- social links (skipped) -->
+    <div>Venue</div>
+    <div>Street address</div>
+    <div>DE - 06217 Merseburg</div>   <!-- country code, PLZ, city -->
+    <!-- optional: -->
+    <div>* Teilnahme noch nicht bestätigt</div>
+  </div>
+</div>
+```
+
+**Key advantage:** The picture link (`<a href>` in `.picture`) points to the
+event's own website — not trollfelsen.de. This gives a higher-quality `source_url`
+than sources that only link to their own listing.
+
+**Filtering:** Cards with "Teilnahme noch nicht bestätigt" in their text are
+skipped (11 of 32 cards in 2026). Only events from the current year onwards
+are returned.
+
+**Known quirks:**
+- Site is Trollfelsen's own attendance schedule, not a comprehensive market
+  directory — dataset is small but events are often niche or under-represented
+  elsewhere.
+- Occasional PLZ typos (e.g. "2399" instead of "23999"); accepted as-is;
+  Nominatim geocodes from city name when PLZ is wrong.
+- Picture link URL may point to a co-located event sponsor rather than the
+  event's canonical site (e.g. WGT for a sub-event at Merseburg).
+
+---
+
+### 7. Taterman.at
 
 | Property | Value |
 |---|---|

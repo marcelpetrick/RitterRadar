@@ -21,7 +21,7 @@ leaves your machine.
 | Feature | Description |
 |---|---|
 | **Auto-crawling** | Background workers harvest events from all configured sources on startup |
-| **6 active adapters** | mittelalterkalender.info, vehi-mercatus.de, spectaculum.de, marktkalendarium.de, mittelaltermarkt.online, taterman.at |
+| **7 active adapters** | mittelalterkalender.info, vehi-mercatus.de, spectaculum.de, marktkalendarium.de, mittelaltermarkt.online, taterman.at, trollfelsen.de |
 | **REST API adapter** | mittelaltermarkt.online uses WordPress Events Calendar JSON API — no HTML scraping |
 | **Deduplication** | Three-phase upsert (PLZ → city → source_url) merges the same event from multiple sources into one record |
 | **Extensible** | Generic table adapter + guide for adding any new site; each adapter carries its own SemVer |
