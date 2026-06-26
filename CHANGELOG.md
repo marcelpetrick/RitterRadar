@@ -8,6 +8,12 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.0.39] — 2026-06-26
+### Docs
+- README architecture section: ASCII box diagram replaced with styled Mermaid flowchart
+  (dark medieval colour palette matching the app theme; full data-flow including
+  three-phase upsert, Nominatim cache path, and all three adapter formats)
+
 ## [0.0.38] — 2026-06-26
 ### Docs
 - **README**: intro rewritten in medieval English; features table updated (multi-format parsing,

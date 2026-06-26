@@ -350,26 +350,66 @@ Key endpoints:
 
 ## Architecture
 
-See `docs/architecture.md` for C4 container and component diagrams.
+See `docs/architecture.md` for full C4 container and component diagrams.
 
-```
-┌──────────────────────────────────────────────────────────┐
-│  Browser (Leaflet + Vanilla JS)                           │
-│  - map.js · filters.js · detail-panel.js · crawler-status│
-└───────────────────────┬──────────────────────────────────┘
-                        │ HTTP (polling, 4–8 s)
-┌───────────────────────▼──────────────────────────────────┐
-│  FastAPI Application (uvicorn)                            │
-│  - /api/markets   - /api/settings  - /health             │
-│  - /api/sources   - /api/crawl/*                         │
-└──────────┬────────────────────────┬──────────────────────┘
-           │                        │
-┌──────────▼───────────┐  ┌────────▼──────────────────────┐
-│  SQLite (SQLModel)    │  │  CrawlQueue + N CrawlWorkers  │
-│  - market            │  │  - asyncio.Queue              │
-│  - source            │◄─┤  - PoliteHttpClient           │
-│  - crawl_job         │  │  - Per-site Adapters          │
-│  - user_settings     │  │  - Nominatim geocoding        │
-│  - geocoding_cache   │  └───────────────────────────────┘
-└──────────────────────┘
+```mermaid
+flowchart TB
+    Browser["🌐 **Browser**
+    Leaflet map · Vanilla JS
+    map.js · filters.js
+    detail-panel.js · crawler-status.js · activity-log.js"]
+
+    FastAPI["⚙ **FastAPI** · uvicorn
+    /api/markets · /api/crawl
+    /api/settings · /api/sources · /health"]
+
+    subgraph DB["🗄 SQLite · SQLModel"]
+        Tables["market · source · crawl_job
+        user_settings · geocoding_cache"]
+    end
+
+    subgraph Engine["🕷 Crawler Engine"]
+        Queue["CrawlQueue  ·  asyncio.Queue"]
+        Workers["CrawlWorkers ×3  ·  PoliteHttpClient
+        7 adapters + generic_table fallback
+        0.5–2 s polite delay · exponential backoff"]
+        Queue --> Workers
+    end
+
+    subgraph Sources["🌍 Web Sources"]
+        HTML["HTML scraping
+        mittelalterkalender.info
+        vehi-mercatus.de · spectaculum.de
+        marktkalendarium.de · trollfelsen.de"]
+        REST["WordPress REST API
+        mittelaltermarkt.online
+        pre-geocoded lat/lon included"]
+        ICAL["iCal feed  RFC 5545
+        taterman.at"]
+    end
+
+    Nominatim["📍 Nominatim
+    OpenStreetMap geocoder
+    SQLite result cache · 1 req/s limit"]
+
+    Browser    -->|"HTTP polling · 4–8 s"| FastAPI
+    FastAPI    -->|"reads · hides"| DB
+    FastAPI    -.->|"triggers on startup"| Engine
+    Engine     -->|"three-phase upsert"| DB
+    Engine     -->|"polite HTTP"| Sources
+    Engine     -->|"geocode address"| Nominatim
+    Nominatim  -.->|"cached results"| DB
+
+    style Browser   fill:#2c1a0e,stroke:#c5a028,color:#f0e6d0
+    style FastAPI   fill:#1a0d04,stroke:#c5a028,color:#f0e6d0
+    style DB        fill:#0d0600,stroke:#7a6010,color:#a08060
+    style Engine    fill:#2c1a0e,stroke:#8b1a1a,color:#f0e6d0
+    style Sources   fill:#0d0600,stroke:#3a5a3a,color:#a08060
+    style Nominatim fill:#0d0600,stroke:#1a3a8b,color:#a08060
+    style Queue     fill:#1a0d04,stroke:#8b1a1a,color:#f0e6d0
+    style Workers   fill:#1a0d04,stroke:#8b1a1a,color:#f0e6d0
+    style Tables    fill:#0d0600,stroke:#7a6010,color:#a08060
+    style HTML      fill:#0d0600,stroke:#3a5a3a,color:#a08060
+    style REST      fill:#0d0600,stroke:#3a5a3a,color:#a08060
+    style ICAL      fill:#0d0600,stroke:#3a5a3a,color:#a08060
 ```
