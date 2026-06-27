@@ -1,14 +1,14 @@
 # ⚔ RitterRadar
 
-> *Harken, good traveller, and lend thine ear!*
+> *Hearken, good traveller, and lend thine ear!*
 >
-> *RitterRadar is a cunning instrument, forged in the fires of Python, to aid thee in thy noble quest: the discovery of medieval markets, Renaissance fairs, Viking spectacles, and Christmas revelries of the ancient style — across the German lands and beyond.*
+> *RitterRadar is a cunning instrument, forged in the fires of Python, to aid thee in thy noble quest: the discovery of medieval markets, Renaissance fairs, Viking spectacles, and Christmas revelries of the ancient style - across the German lands and beyond.*
 >
-> *This tool doth dispatch tireless web-crawling agents into the vast digital wilderness. They return laden with tidings of forthcoming events — their names, their dates, their whereabouts — and store all within a local treasury of SQLite.*
+> *This tool doth dispatch tireless web-crawling agents into the vast digital wilderness. They return laden with tidings of forthcoming events - their names, their dates, their whereabouts — and store all within a local treasury of SQLite.*
 >
 > *Upon thine own machine it doth render a most beautiful interactive map, whereupon thou mayest **filter by period** (which months thou wishest to survey) and **filter by space** (thy home position and a radius of thy choosing, from a stone's throw to 1024 leagues). Click upon any marker to learn the full particulars. The crawler runneth in the background; the map refresheth on its own accord.*
 >
-> *No cloud. No accounts. No data leaveth thy machine. Thus: a helper tool that crawleth the web with custom crawlers, presenteth the findings, and alloweth thee to sift them by time and by distance. Nothing more, nothing less — but fashioned with care.*
+> *No cloud. No accounts. No data leaveth thy machine. Thus: a helper tool that crawleth the web with custom crawlers, presenteth the findings, and alloweth thee to sift them by time and by distance. Nothing more, nothing less - but fashioned with care.*
 
 ---
 
