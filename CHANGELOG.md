@@ -8,6 +8,11 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.0.42] — 2026-07-09
+### Fixed
+- Upcoming-events preview now stays in sync with the map results even when the
+  filtered market payload is loaded before the preview module is ready.
+
 ## [0.0.41] — 2026-07-09
 ### Added
 - Collapsible bottom preview for upcoming markets based on the current map filters,

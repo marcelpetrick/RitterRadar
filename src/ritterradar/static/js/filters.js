@@ -4,6 +4,7 @@
  * Copyright (C) 2026 Marcel Petrick <mail@marcelpetrick.it>
  */
 import { renderMarkers, setHomePin, flyTo } from './map.js';
+import { updateEventsPreview } from './events-preview.js';
 import { appLog } from './activity-log.js';
 
 function _log(level, msg) { appLog(level, msg); }
@@ -90,7 +91,7 @@ export async function fetchAndRender(silent = false) {
     if (!r.ok) { if (!silent) _log('error', `Marktdaten: Serverfehler ${r.status}`); return; }
     const markets = await r.json();
     renderMarkers(markets);
-    window.dispatchEvent(new CustomEvent('markets-loaded', { detail: { markets } }));
+    updateEventsPreview(markets);
     if (!silent) _log('info', `${markets.length} Märkte geladen`);
   } catch (err) {
     if (!silent) _log('error', `Marktdaten konnten nicht geladen werden: ${err.message}`);

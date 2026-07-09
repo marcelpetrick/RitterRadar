@@ -88,6 +88,11 @@ function renderPreview(markets) {
   }
 }
 
+export function updateEventsPreview(markets) {
+  currentMarkets = Array.isArray(markets) ? markets : [];
+  renderPreview(currentMarkets);
+}
+
 function copyCurrentList() {
   const sorted = [...currentMarkets].sort(byDateThenName);
   if (!sorted.length) {
@@ -121,11 +126,6 @@ function esc(str) {
     .replace(/&/g, '&amp;').replace(/</g, '&lt;')
     .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
-
-window.addEventListener('markets-loaded', e => {
-  currentMarkets = Array.isArray(e.detail?.markets) ? e.detail.markets : [];
-  renderPreview(currentMarkets);
-});
 
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('preview-toggle')?.addEventListener('click', togglePreview);
