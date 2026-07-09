@@ -8,6 +8,11 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.0.45] — 2026-07-09
+### Added
+- On-the-fly duplicate suppression for filtered map/list results when postal
+  code and date range match; the entry with the longer event title is kept.
+
 ## [0.0.44] — 2026-07-09
 ### Fixed
 - Startup map loading now waits for saved filter settings before requesting

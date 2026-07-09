@@ -54,6 +54,28 @@ function getFilters() {
   return { dateFrom, dateTo, radiusKm: Number(radiusEl?.value || 100), types };
 }
 
+function dedupeMarkets(markets) {
+  const byDateAndPostal = new Map();
+  for (const market of markets) {
+    const postalCode = String(market.postal_code || '').trim();
+    if (!postalCode) continue;
+
+    const key = [postalCode, market.start_date || '', market.end_date || ''].join('|');
+    const current = byDateAndPostal.get(key);
+    if (!current || String(market.name || '').length > String(current.name || '').length) {
+      byDateAndPostal.set(key, market);
+    }
+  }
+
+  return markets.filter(market => {
+    const postalCode = String(market.postal_code || '').trim();
+    if (!postalCode) return true;
+
+    const key = [postalCode, market.start_date || '', market.end_date || ''].join('|');
+    return byDateAndPostal.get(key) === market;
+  });
+}
+
 // ── Fetch and render ────────────────────────────────────────
 let homeCoords = { lat: null, lon: null };
 let settingsReady = Promise.resolve();
@@ -97,9 +119,14 @@ export async function fetchAndRender(silent = false) {
     if (!r.ok) { if (!silent) _log('error', `Marktdaten: Serverfehler ${r.status}`); return; }
     const markets = await r.json();
     if (fetchId !== latestFetchId) return;
-    renderMarkers(markets);
-    updateEventsPreview(markets);
-    if (!silent) _log('info', `${markets.length} Märkte geladen`);
+    const dedupedMarkets = dedupeMarkets(markets);
+    renderMarkers(dedupedMarkets);
+    updateEventsPreview(dedupedMarkets);
+    if (!silent) {
+      const hiddenDuplicates = markets.length - dedupedMarkets.length;
+      const suffix = hiddenDuplicates ? `, ${hiddenDuplicates} Duplikate ausgeblendet` : '';
+      _log('info', `${dedupedMarkets.length} Märkte geladen${suffix}`);
+    }
   } catch (err) {
     if (!silent) _log('error', `Marktdaten konnten nicht geladen werden: ${err.message}`);
   }
