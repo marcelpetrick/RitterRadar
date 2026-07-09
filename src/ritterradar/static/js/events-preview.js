@@ -5,8 +5,6 @@
  */
 import { appLog } from './activity-log.js';
 
-const MAX_PREVIEW_ITEMS = 18;
-
 let currentMarkets = [];
 
 const TYPE_LABELS = {
@@ -67,7 +65,7 @@ function renderPreview(markets) {
   }
 
   list.className = 'preview-list';
-  list.innerHTML = sorted.slice(0, MAX_PREVIEW_ITEMS).map(market => {
+  list.innerHTML = sorted.map(market => {
     const typeLabel = TYPE_LABELS[market.market_type] || market.market_type || 'Markt';
     const dist = distanceText(market);
     return `<button class="preview-row" data-market-id="${market.id}">
@@ -79,13 +77,6 @@ function renderPreview(markets) {
       <span class="preview-type badge-${esc(market.market_type)}">${esc(typeLabel)}</span>
     </button>`;
   }).join('');
-
-  if (sorted.length > MAX_PREVIEW_ITEMS) {
-    list.insertAdjacentHTML(
-      'beforeend',
-      `<div class="preview-more">+${sorted.length - MAX_PREVIEW_ITEMS} weitere im aktuellen Filter</div>`
-    );
-  }
 }
 
 export function updateEventsPreview(markets) {

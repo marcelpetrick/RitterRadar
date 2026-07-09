@@ -8,6 +8,11 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.0.43] — 2026-07-09
+### Changed
+- Upcoming-events preview now renders all filtered events instead of capping the
+  visible list.
+
 ## [0.0.42] — 2026-07-09
 ### Fixed
 - Upcoming-events preview now stays in sync with the map results even when the

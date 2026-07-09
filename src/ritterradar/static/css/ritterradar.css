@@ -759,14 +759,12 @@ input[type="range"]::-moz-range-thumb {
   white-space: nowrap;
 }
 
-.preview-empty,
-.preview-more {
+.preview-empty {
   padding: 0.55rem 0.75rem;
   color: var(--text-muted);
   font-size: 0.82rem;
   font-style: italic;
 }
-.preview-more { text-align: center; }
 
 @media (max-width: 1100px) {
   #events-preview-panel {
