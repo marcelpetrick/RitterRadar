@@ -8,6 +8,10 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.0.47] — 2026-07-09
+### Added
+- Startup log now reports the running package version.
+
 ## [0.0.46] — 2026-07-09
 ### Changed
 - On-the-fly duplicate suppression now also catches safe title/location

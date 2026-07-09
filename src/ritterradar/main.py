@@ -52,7 +52,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     logger = logging.getLogger(__name__)
     settings = get_settings()
 
-    logger.info("RitterRadar starting up…")
+    logger.info("RitterRadar starting up… version=%s", _VERSION)
     create_tables()
     logger.info("Database tables ready")
 
