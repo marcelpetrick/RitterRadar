@@ -8,6 +8,12 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.0.46] — 2026-07-09
+### Changed
+- On-the-fly duplicate suppression now also catches safe title/location
+  variants using normalized titles, normalized places, and very close
+  coordinates for identical date ranges.
+
 ## [0.0.45] — 2026-07-09
 ### Added
 - On-the-fly duplicate suppression for filtered map/list results when postal
