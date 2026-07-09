@@ -90,6 +90,7 @@ export async function fetchAndRender(silent = false) {
     if (!r.ok) { if (!silent) _log('error', `Marktdaten: Serverfehler ${r.status}`); return; }
     const markets = await r.json();
     renderMarkers(markets);
+    window.dispatchEvent(new CustomEvent('markets-loaded', { detail: { markets } }));
     if (!silent) _log('info', `${markets.length} Märkte geladen`);
   } catch (err) {
     if (!silent) _log('error', `Marktdaten konnten nicht geladen werden: ${err.message}`);

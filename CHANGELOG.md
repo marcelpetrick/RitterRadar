@@ -8,6 +8,16 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.0.41] — 2026-07-09
+### Added
+- Collapsible bottom preview for upcoming markets based on the current map filters,
+  sorted chronologically and copyable as a plain-text list.
+
+## [0.0.40] — 2026-07-09
+### Changed
+- Dependency pins updated for FastAPI, Uvicorn, and mypy.
+- Compatibility fixes for the updated lint/type-checking toolchain.
+
 ## [0.0.39] — 2026-06-26
 ### Docs
 - README architecture section: ASCII box diagram replaced with styled Mermaid flowchart

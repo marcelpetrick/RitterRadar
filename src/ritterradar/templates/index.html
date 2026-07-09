@@ -134,6 +134,19 @@
     <div id="jobs-list"></div>
   </div>
 
+  <!-- ═══════════════════════ NEXT EVENTS PREVIEW ═══════════════════════ -->
+  <div id="events-preview-panel" class="preview-collapsed">
+    <div class="preview-header">
+      <button id="preview-toggle" class="preview-toggle" title="Ein-/Ausklappen">▲</button>
+      <span class="preview-title">Nächste Märkte</span>
+      <span id="preview-count" class="preview-count">0</span>
+      <button id="preview-copy" class="btn-sm btn-ghost">Kopieren</button>
+    </div>
+    <div id="preview-body">
+      <div id="preview-list" class="preview-empty">Keine Märkte im aktuellen Filter.</div>
+    </div>
+  </div>
+
   <!-- ═══════════════════════ ACTIVITY LOG ════════════════════════ -->
   <div id="activity-log">
     <div class="log-header">
@@ -155,4 +168,5 @@
 <script src="/static/js/filters.js" type="module"></script>
 <script src="/static/js/detail-panel.js" type="module"></script>
 <script src="/static/js/crawler-status.js" type="module"></script>
+<script src="/static/js/events-preview.js" type="module"></script>
 {% endblock %}
