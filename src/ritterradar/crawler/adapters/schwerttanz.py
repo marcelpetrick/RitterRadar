@@ -83,7 +83,8 @@ def _parse_row(row: Tag) -> MarketData | None:
         city = m.group(2)
 
     link = row.find("a", href=True)
-    source_url = urljoin(BASE, link["href"]) if link else BASE  # type: ignore[index]
+    href = link.get("href") if isinstance(link, Tag) else None
+    source_url = urljoin(BASE, href) if isinstance(href, str) else BASE
 
     return MarketData(
         name=name[:200],

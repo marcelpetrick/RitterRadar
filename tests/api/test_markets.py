@@ -2,9 +2,8 @@
 # Copyright (C) 2026 Marcel Petrick <mail@marcelpetrick.it>
 """Integration tests for the markets API."""
 
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 
-import pytest
 from fastapi.testclient import TestClient
 from sqlmodel import Session
 
@@ -12,19 +11,19 @@ from ritterradar.models.market import Market
 
 
 def _make_market(session: Session, **kwargs) -> Market:
-    defaults = dict(
-        name="TestMarkt",
-        start_date=date(2026, 7, 10),
-        end_date=date(2026, 7, 12),
-        source_url="https://example.com/1",
-        source_name="Test",
-        latitude=48.1351,
-        longitude=11.5820,
-        city="München",
-        postal_code="80331",
-        created_at=datetime.now(timezone.utc),
-        updated_at=datetime.now(timezone.utc),
-    )
+    defaults = {
+        "name": "TestMarkt",
+        "start_date": date(2026, 7, 10),
+        "end_date": date(2026, 7, 12),
+        "source_url": "https://example.com/1",
+        "source_name": "Test",
+        "latitude": 48.1351,
+        "longitude": 11.5820,
+        "city": "München",
+        "postal_code": "80331",
+        "created_at": datetime.now(UTC),
+        "updated_at": datetime.now(UTC),
+    }
     defaults.update(kwargs)
     m = Market(**defaults)
     session.add(m)

@@ -9,15 +9,16 @@
 
 from pathlib import Path
 
+from sqlalchemy.engine import Engine
 from sqlmodel import SQLModel, create_engine
 
 from ritterradar.config import get_settings
 
 # Populated on first call to get_engine()
-_engine = None  # type: ignore[assignment]
+_engine: Engine | None = None
 
 
-def get_engine():  # type: ignore[return]
+def get_engine() -> Engine:
     """Return the (singleton) SQLAlchemy engine, creating it on first call."""
     global _engine
     if _engine is None:

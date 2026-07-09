@@ -44,7 +44,7 @@ import logging
 import re
 from datetime import date, timedelta
 
-from icalendar import Calendar  # type: ignore[import-untyped]
+from icalendar import Calendar
 
 from ritterradar.crawler.base_adapter import AbstractCrawlerAdapter, MarketData
 from ritterradar.crawler.http_client import PoliteHttpClient
@@ -126,9 +126,10 @@ def _coerce_date(dt_prop: object) -> date | None:
     # datetime.datetime has a .date() method; datetime.date does not.
     date_method = getattr(val, "date", None)
     if callable(date_method):
-        return date_method()  # type: ignore[return-value]
+        parsed = date_method()
+        return parsed if isinstance(parsed, date) else None
     if isinstance(val, date):
-        return val  # type: ignore[return-value]
+        return val
     return None
 
 

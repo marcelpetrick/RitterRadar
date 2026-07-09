@@ -2,6 +2,7 @@
 # Copyright (C) 2026 Marcel Petrick <mail@marcelpetrick.it>
 """Tests for the settings API."""
 
+import pytest
 from fastapi.testclient import TestClient
 
 
@@ -31,6 +32,3 @@ def test_update_settings_partial(client: TestClient):
     client.put("/api/settings", json={"default_radius_km": 200.0})
     r = client.get("/api/settings")
     assert r.json()["default_radius_km"] == pytest.approx(200.0)
-
-
-import pytest

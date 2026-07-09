@@ -11,6 +11,7 @@ import asyncio
 import logging
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from typing import Any, cast
 
 from sqlmodel import Session, select
 
@@ -119,17 +120,15 @@ async def _nominatim_lookup(query: str, user_agent: str) -> GeoResult | None:
 
 
 def _blocking_lookup(query: str, user_agent: str) -> GeoResult | None:
-    from geopy.geocoders import Nominatim  # type: ignore[import-untyped]
+    from geopy.geocoders import Nominatim
 
     geolocator = Nominatim(user_agent=user_agent)
-    location = geolocator.geocode(  # type: ignore[union-attr]
-        query, exactly_one=True, language="de", addressdetails=False
-    )
+    location = geolocator.geocode(query, exactly_one=True, language="de", addressdetails=False)
     if location is None:
         return None
 
     importance: float = getattr(location, "importance", None) or 0.0
-    raw: dict = getattr(location, "raw", {})
+    raw: dict[str, Any] = getattr(location, "raw", {})
     result_type: str = raw.get("type", "")
 
     # Mark uncertain if importance is low or the result is too coarse
@@ -137,8 +136,8 @@ def _blocking_lookup(query: str, user_agent: str) -> GeoResult | None:
     uncertain = importance < 0.4 or result_type in coarse_types
 
     return GeoResult(
-        latitude=location.latitude,
-        longitude=location.longitude,
+        latitude=cast(float, location.latitude),
+        longitude=cast(float, location.longitude),
         display_name=str(location.address),
         uncertain=uncertain,
     )

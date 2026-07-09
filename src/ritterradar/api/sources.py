@@ -8,7 +8,7 @@
 """Sources API — list configured crawl sources and their status."""
 
 from datetime import datetime
-from typing import Annotated
+from typing import Annotated, Any, cast
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
@@ -36,7 +36,7 @@ async def list_sources(
     session: Annotated[Session, Depends(get_session)],
 ) -> list[SourceOut]:
     """Return all configured sources with their last crawl status."""
-    sources = session.exec(select(Source).order_by(Source.name)).all()  # type: ignore[arg-type]
+    sources = session.exec(select(Source).order_by(cast(Any, Source.name))).all()
     return [
         SourceOut(
             id=s.id or 0,

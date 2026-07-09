@@ -8,7 +8,7 @@
 """Markets API — listing, filtering, and visibility control."""
 
 from datetime import UTC, date, datetime
-from typing import Annotated
+from typing import Annotated, Any, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
@@ -65,21 +65,22 @@ async def list_markets(
     if date_to:
         stmt = stmt.where(Market.start_date <= date_to)
     if market_type:
-        stmt = stmt.where(Market.market_type.in_(market_type))  # type: ignore[union-attr]
+        stmt = stmt.where(cast(Any, Market.market_type).in_(market_type))
 
-    markets = session.exec(stmt.order_by(Market.start_date)).all()  # type: ignore[arg-type]
+    markets = session.exec(stmt.order_by(cast(Any, Market.start_date))).all()
 
     results: list[MarketOut] = []
     for m in markets:
         dist: float | None = None
-        coords_ok = (
+        market_lat = m.latitude
+        market_lon = m.longitude
+        if (
             lat is not None
             and lon is not None
-            and m.latitude is not None
-            and m.longitude is not None
-        )
-        if coords_ok:
-            dist = round(distance_km(lat, lon, m.latitude, m.longitude), 1)
+            and market_lat is not None
+            and market_lon is not None
+        ):
+            dist = round(distance_km(lat, lon, market_lat, market_lon), 1)
             if radius_km is not None and dist > radius_km:
                 continue
 

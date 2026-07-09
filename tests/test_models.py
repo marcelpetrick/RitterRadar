@@ -2,10 +2,10 @@
 # Copyright (C) 2026 Marcel Petrick <mail@marcelpetrick.it>
 """Tests for SQLModel table models."""
 
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 
 import pytest
-from sqlmodel import Session, select
+from sqlmodel import Session
 
 from ritterradar.models.crawl_job import CrawlJob
 from ritterradar.models.market import Market
@@ -104,5 +104,5 @@ def test_market_timestamps_utc(session: Session):
     session.flush()
     # created_at should be a recent datetime
     assert isinstance(m.created_at, datetime)
-    delta = datetime.now(timezone.utc) - m.created_at.replace(tzinfo=timezone.utc)
+    delta = datetime.now(UTC) - m.created_at.replace(tzinfo=UTC)
     assert delta.total_seconds() < 5

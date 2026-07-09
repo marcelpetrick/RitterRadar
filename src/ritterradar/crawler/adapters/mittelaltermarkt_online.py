@@ -55,6 +55,7 @@ Category-to-market-type mapping:
 import html
 import logging
 from datetime import date, datetime
+from typing import Any
 
 from ritterradar.crawler.base_adapter import AbstractCrawlerAdapter, MarketData
 from ritterradar.crawler.http_client import PoliteHttpClient
@@ -112,7 +113,10 @@ def _parse_date(raw: str) -> date | None:
         return None
 
 
-def _detect_type(categories: list[dict]) -> str:
+JsonObject = dict[str, Any]
+
+
+def _detect_type(categories: list[JsonObject]) -> str:
     for cat in categories:
         slug: str = cat.get("slug", "")
         if slug in _CATEGORY_TYPE:
@@ -132,7 +136,7 @@ def _detect_type(categories: list[dict]) -> str:
     return "medieval"
 
 
-def _parse_event(ev: dict) -> MarketData | None:
+def _parse_event(ev: JsonObject) -> MarketData | None:
     name: str = html.unescape(ev.get("title", "")).strip()
     if not name:
         return None
@@ -147,7 +151,7 @@ def _parse_event(ev: dict) -> MarketData | None:
     source_url: str = ev.get("url", BASE)
 
     # Venue data
-    venue: dict = ev.get("venue") or {}
+    venue: JsonObject = ev.get("venue") or {}
     city = venue.get("city") or None
     postal_code = venue.get("zip") or None
     country_raw = venue.get("country", "Deutschland")
@@ -161,7 +165,7 @@ def _parse_event(ev: dict) -> MarketData | None:
         if not any(c.isdigit() for c in postal_code):
             postal_code = None
 
-    categories: list[dict] = ev.get("categories") or []
+    categories: list[JsonObject] = ev.get("categories") or []
     market_type = _detect_type(categories)
 
     return MarketData(
@@ -214,7 +218,7 @@ class MittelaltermarktOnlineAdapter(AbstractCrawlerAdapter):
                 break
 
             try:
-                data: dict = response.json()
+                data: JsonObject = response.json()
             except Exception:
                 logger.warning("%s: non-JSON response on page %d", self.SOURCE_NAME, page)
                 break
@@ -229,7 +233,7 @@ class MittelaltermarktOnlineAdapter(AbstractCrawlerAdapter):
                     total_pages,
                 )
 
-            events: list[dict] = data.get("events") or []
+            events: list[JsonObject] = data.get("events") or []
             for ev in events:
                 mdata = _parse_event(ev)
                 if mdata:

@@ -115,10 +115,12 @@ def _parse_card(card: Tag) -> MarketData | None:
     # Source URL: first external link in .picture div
     picture = card.find(class_="picture")
     source_url = _URL
-    if picture:
+    if isinstance(picture, Tag):
         link = picture.find("a", href=True)
-        if link and link["href"].startswith("http"):
-            source_url = link["href"]
+        if isinstance(link, Tag):
+            href = link.get("href")
+            if isinstance(href, str) and href.startswith("http"):
+                source_url = href
 
     # Location
     postal_code, city, country = _parse_location(text)

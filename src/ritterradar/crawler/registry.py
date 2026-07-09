@@ -7,6 +7,7 @@
 # (at your option) any later version.
 """Adapter registry — maps adapter_name strings to concrete adapter classes."""
 
+from collections.abc import Callable
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -15,7 +16,9 @@ if TYPE_CHECKING:
 _REGISTRY: dict[str, type["AbstractCrawlerAdapter"]] = {}
 
 
-def register(name: str):  # type: ignore[return]
+def register(
+    name: str,
+) -> Callable[[type["AbstractCrawlerAdapter"]], type["AbstractCrawlerAdapter"]]:
     """Class decorator: register an adapter under *name*."""
 
     def decorator(cls: type["AbstractCrawlerAdapter"]) -> type["AbstractCrawlerAdapter"]:

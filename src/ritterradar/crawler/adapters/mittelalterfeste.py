@@ -65,7 +65,7 @@ class MittelalterfestAdapter(AbstractCrawlerAdapter):
 
             found_on_page = 0
             for item in items:
-                mdata = _parse_item(item, self.SOURCE_NAME)
+                mdata = _parse_item(item)
                 if mdata:
                     results.append(mdata)
                     found_on_page += 1
@@ -77,7 +77,7 @@ class MittelalterfestAdapter(AbstractCrawlerAdapter):
         return results
 
 
-def _parse_item(item: Tag, source_name: str) -> MarketData | None:
+def _parse_item(item: Tag) -> MarketData | None:
     # Title
     title_tag = item.find(["h1", "h2", "h3", "h4", "strong"])
     if not title_tag:
@@ -120,7 +120,8 @@ def _parse_item(item: Tag, source_name: str) -> MarketData | None:
 
     # Source URL
     link = item.find("a", href=True)
-    source_url = urljoin(BASE, link["href"]) if link else BASE  # type: ignore[index]
+    href = link.get("href") if isinstance(link, Tag) else None
+    source_url = urljoin(BASE, href) if isinstance(href, str) else BASE
 
     # Market type
     market_type = _detect_type(name + " " + full_text)
@@ -134,7 +135,6 @@ def _parse_item(item: Tag, source_name: str) -> MarketData | None:
         postal_code=postal_code,
         original_text=full_text[:1000],
         source_url=source_url,
-        source_name=source_name,
         confidence_score=0.85,
     )
 
