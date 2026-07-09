@@ -56,6 +56,8 @@ function getFilters() {
 
 // ── Fetch and render ────────────────────────────────────────
 let homeCoords = { lat: null, lon: null };
+let settingsReady = Promise.resolve();
+let latestFetchId = 0;
 
 async function loadSettings() {
   try {
@@ -75,6 +77,10 @@ async function loadSettings() {
 }
 
 export async function fetchAndRender(silent = false) {
+  const fetchId = ++latestFetchId;
+  await settingsReady;
+  if (fetchId !== latestFetchId) return;
+
   const { dateFrom, dateTo, radiusKm, types } = getFilters();
   const params = new URLSearchParams();
   if (dateFrom)              params.set('date_from', dateFrom);
@@ -90,6 +96,7 @@ export async function fetchAndRender(silent = false) {
     const r = await fetch(`/api/markets?${params}`);
     if (!r.ok) { if (!silent) _log('error', `Marktdaten: Serverfehler ${r.status}`); return; }
     const markets = await r.json();
+    if (fetchId !== latestFetchId) return;
     renderMarkers(markets);
     updateEventsPreview(markets);
     if (!silent) _log('info', `${markets.length} Märkte geladen`);
@@ -151,8 +158,8 @@ async function geocodeHome(query) {
 // ── Wire up events ──────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   buildMonthOptions();
-  loadSettings();
-  fetchAndRender();
+  settingsReady = loadSettings();
+  settingsReady.then(() => fetchAndRender());
 
   // Radius slider live label
   const radiusEl    = document.getElementById('radius-slider');
@@ -185,5 +192,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Auto-refresh every 8 seconds (silent — no log spam)
-  setInterval(() => fetchAndRender(true), 8_000);
+  settingsReady.then(() => {
+    setInterval(() => fetchAndRender(true), 8_000);
+  });
 });

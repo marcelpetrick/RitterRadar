@@ -8,6 +8,13 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.0.44] — 2026-07-09
+### Fixed
+- Startup map loading now waits for saved filter settings before requesting
+  markets, preventing an initial unfiltered result set from rendering.
+- Overlapping market refreshes now ignore stale responses so crawler-triggered
+  updates cannot overwrite the current filtered view with older data.
+
 ## [0.0.43] — 2026-07-09
 ### Changed
 - Upcoming-events preview now renders all filtered events instead of capping the
