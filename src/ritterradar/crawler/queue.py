@@ -9,7 +9,9 @@
 
 import asyncio
 import logging
+from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any, cast
 
 import yaml
 from sqlmodel import Session, select
@@ -42,6 +44,7 @@ class CrawlQueue:
 
     async def start(self) -> None:
         self._seed_sources()
+        self._recover_interrupted_jobs()
         self._enqueue_all()
         for i in range(self._settings.workers):
             w = CrawlWorker(self._queue, worker_id=i)
@@ -97,6 +100,25 @@ class CrawlQueue:
                     session.add(existing)
             session.commit()
         logger.info("CrawlQueue: sources seeded from %s", sources_file)
+
+    def _recover_interrupted_jobs(self) -> int:
+        """Close jobs orphaned when a previous application process stopped."""
+        recovered = 0
+        finished_at = datetime.now(UTC)
+        with Session(get_engine()) as session:
+            jobs = session.exec(
+                select(CrawlJob).where(cast(Any, CrawlJob.status).in_(("pending", "running")))
+            ).all()
+            for job in jobs:
+                job.status = "skipped"
+                job.finished_at = finished_at
+                job.error_message = "Interrupted by application shutdown"
+                session.add(job)
+                recovered += 1
+            session.commit()
+        if recovered:
+            logger.warning("CrawlQueue: marked %d interrupted jobs as skipped", recovered)
+        return recovered
 
     def _enqueue_all(self) -> int:
         count = 0

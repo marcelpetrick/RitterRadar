@@ -8,6 +8,11 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.0.54] — 2026-07-10
+### Fixed
+- Startup now marks crawl jobs orphaned by an earlier application shutdown as
+  skipped before enqueuing the new run, keeping status counters accurate.
+
 ## [0.0.53] — 2026-07-10
 ### Changed
 - Existing geocoder cache entries are promoted without a network request when
