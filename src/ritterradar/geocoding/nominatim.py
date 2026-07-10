@@ -20,6 +20,8 @@ from ritterradar.models.geocoding_cache import GeocodingCache
 
 logger = logging.getLogger(__name__)
 
+GeoQuery = str | dict[str, str]
+
 # Nominatim ToS: maximum 1 request per second
 _RATE_LIMIT_SECONDS = 1.1
 _last_request_time: float = 0.0
@@ -36,25 +38,78 @@ class GeoResult:
     uncertain: bool
 
 
-async def geocode(query: str, user_agent: str) -> GeoResult | None:
+async def geocode(
+    query: str,
+    user_agent: str,
+    *,
+    country_code: str | None = None,
+    postal_code: str | None = None,
+    city: str | None = None,
+) -> GeoResult | None:
     """Geocode *query* using Nominatim with cache and rate limiting.
 
     Returns ``None`` when the address cannot be resolved at all.
     Sets ``uncertain=True`` when the result confidence is low
     (importance < 0.4 or result type is too coarse).
     """
-    normalised = query.strip().lower()
-    if not normalised:
+    cache_key = _cache_key(query, country_code, postal_code, city)
+    if not cache_key:
         return None
 
-    cached = _cache_get(normalised)
+    cached = _cache_get(cache_key)
     if cached is not None:
         return cached
 
-    result = await _nominatim_lookup(query, user_agent)
+    lookup_query = _structured_query(postal_code, city) or query
+    result = await _nominatim_lookup(
+        lookup_query,
+        user_agent,
+        country_code=country_code,
+        postal_code=postal_code,
+    )
+    if result is None and postal_code and city:
+        # Some locality names are ambiguous even alongside a postal code.
+        # A validated postal centroid is safer than accepting the wrong city.
+        result = await _nominatim_lookup(
+            {"postalcode": postal_code.strip()},
+            user_agent,
+            country_code=country_code,
+            postal_code=postal_code,
+        )
     if result is not None:
-        _cache_set(normalised, result)
+        _cache_set(cache_key, result)
     return result
+
+
+def _cache_key(
+    query: str,
+    country_code: str | None,
+    postal_code: str | None,
+    city: str | None,
+) -> str:
+    normalised_query = query.strip().lower()
+    if not normalised_query:
+        return ""
+    if country_code is None and postal_code is None and city is None:
+        return normalised_query
+    return "|".join(
+        (
+            "market-v2",
+            (country_code or "").strip().lower(),
+            _normalise_postal_code(postal_code),
+            (city or "").strip().lower(),
+            normalised_query,
+        )
+    )
+
+
+def _structured_query(postal_code: str | None, city: str | None) -> dict[str, str]:
+    query: dict[str, str] = {}
+    if postal_code:
+        query["postalcode"] = postal_code.strip()
+    if city:
+        query["city"] = city.strip()
+    return query
 
 
 def _cache_get(normalised_query: str) -> GeoResult | None:
@@ -98,7 +153,13 @@ def _cache_set(normalised_query: str, result: GeoResult) -> None:
         session.commit()
 
 
-async def _nominatim_lookup(query: str, user_agent: str) -> GeoResult | None:
+async def _nominatim_lookup(
+    query: GeoQuery,
+    user_agent: str,
+    *,
+    country_code: str | None = None,
+    postal_code: str | None = None,
+) -> GeoResult | None:
     global _last_request_time
 
     async with _rate_limit_lock:
@@ -111,7 +172,13 @@ async def _nominatim_lookup(query: str, user_agent: str) -> GeoResult | None:
     try:
         # Run the blocking geopy call in a thread pool
         result = await asyncio.get_event_loop().run_in_executor(
-            None, lambda: _blocking_lookup(query, user_agent)
+            None,
+            lambda: _blocking_lookup(
+                query,
+                user_agent,
+                country_code=country_code,
+                postal_code=postal_code,
+            ),
         )
         return result
     except Exception:
@@ -119,16 +186,31 @@ async def _nominatim_lookup(query: str, user_agent: str) -> GeoResult | None:
         return None
 
 
-def _blocking_lookup(query: str, user_agent: str) -> GeoResult | None:
+def _blocking_lookup(
+    query: GeoQuery,
+    user_agent: str,
+    *,
+    country_code: str | None = None,
+    postal_code: str | None = None,
+) -> GeoResult | None:
     from geopy.geocoders import Nominatim
 
     geolocator = Nominatim(user_agent=user_agent)
-    location = geolocator.geocode(query, exactly_one=True, language="de", addressdetails=False)
+    location = geolocator.geocode(
+        query,
+        exactly_one=True,
+        language="de",
+        addressdetails=True,
+        country_codes=country_code.lower() if country_code else None,
+    )
     if location is None:
         return None
 
     importance: float = getattr(location, "importance", None) or 0.0
     raw: dict[str, Any] = getattr(location, "raw", {})
+    if not _matches_expected_location(raw, country_code, postal_code):
+        logger.warning("Rejected mismatched Nominatim result for query %r", query)
+        return None
     result_type: str = raw.get("type", "")
 
     # Mark uncertain if importance is low or the result is too coarse
@@ -141,3 +223,27 @@ def _blocking_lookup(query: str, user_agent: str) -> GeoResult | None:
         display_name=str(location.address),
         uncertain=uncertain,
     )
+
+
+def _matches_expected_location(
+    raw: dict[str, Any], country_code: str | None, postal_code: str | None
+) -> bool:
+    address = raw.get("address")
+    if not isinstance(address, dict):
+        return country_code is None and postal_code is None
+
+    if country_code:
+        result_country = str(address.get("country_code", "")).casefold()
+        if result_country != country_code.strip().casefold():
+            return False
+
+    if postal_code:
+        result_postal_code = _normalise_postal_code(str(address.get("postcode", "")))
+        if not result_postal_code or result_postal_code != _normalise_postal_code(postal_code):
+            return False
+
+    return True
+
+
+def _normalise_postal_code(postal_code: str | None) -> str:
+    return "".join(character for character in (postal_code or "").casefold() if character.isalnum())

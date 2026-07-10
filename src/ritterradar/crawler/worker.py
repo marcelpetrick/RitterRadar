@@ -116,7 +116,13 @@ class CrawlWorker:
             else:
                 geo_query = _build_geo_query(mdata)
                 if geo_query:
-                    result = await geocode(geo_query, user_agent)
+                    result = await geocode(
+                        geo_query,
+                        user_agent,
+                        country_code=mdata.country,
+                        postal_code=mdata.postal_code,
+                        city=mdata.city,
+                    )
                     if result:
                         lat, lon, uncertain = result.latitude, result.longitude, result.uncertain
 
@@ -276,8 +282,8 @@ def _upsert_market(
                 existing.postal_code = mdata.postal_code
             if existing.address is None and mdata.address:
                 existing.address = mdata.address
-            # Improve geocoords only when we have new data and existing is absent
-            if lat is not None and existing.latitude is None:
+            # A validated recrawl may repair an older low-confidence result.
+            if lat is not None and (existing.latitude is None or existing.geocode_uncertain):
                 existing.latitude = lat
                 existing.longitude = lon
                 existing.geocode_uncertain = uncertain

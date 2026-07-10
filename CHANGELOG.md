@@ -8,6 +8,14 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.0.51] — 2026-07-10
+### Fixed
+- Market geocoding now constrains Nominatim lookups by country, validates
+  returned postal codes, and falls back to a postal centroid when locality
+  names are ambiguous.
+- Constrained market lookups use isolated cache keys, and subsequent crawls
+  can replace previously uncertain coordinates with revalidated results.
+
 ## [0.0.50] — 2026-07-10
 ### Fixed
 - Spatial market responses now exclude events without coordinates, ensuring
