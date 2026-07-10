@@ -8,6 +8,13 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.0.50] — 2026-07-10
+### Fixed
+- Spatial market responses now exclude events without coordinates, ensuring
+  every map, preview, and copied-list result has a calculated distance.
+- Partial spatial API parameters are rejected instead of silently returning
+  unfiltered events.
+
 ## [0.0.49] — 2026-07-10
 ### Documentation
 - Documented the filtered upcoming-events preview and its copyable plain-text

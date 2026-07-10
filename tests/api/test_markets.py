@@ -70,6 +70,48 @@ def test_list_markets_radius_filter(client: TestClient, session: Session):
     assert "Far" not in names
 
 
+def test_spatial_filter_excludes_market_without_coordinates(
+    client: TestClient, session: Session
+):
+    _make_market(
+        session,
+        name="Unknown location",
+        latitude=None,
+        longitude=None,
+        source_url="https://example.com/unknown-location",
+    )
+    r = client.get("/api/markets?lat=48.1351&lon=11.5820&radius_km=50")
+    assert r.status_code == 200
+    assert all(market["name"] != "Unknown location" for market in r.json())
+    assert all(market["distance_km"] is not None for market in r.json())
+
+
+def test_non_spatial_filter_keeps_market_without_coordinates(
+    client: TestClient, session: Session
+):
+    _make_market(
+        session,
+        name="Unmapped",
+        latitude=None,
+        longitude=None,
+        source_url="https://example.com/unmapped",
+    )
+    r = client.get("/api/markets")
+    assert r.status_code == 200
+    market = next(item for item in r.json() if item["name"] == "Unmapped")
+    assert market["distance_km"] is None
+
+
+def test_spatial_filter_requires_complete_origin(client: TestClient):
+    missing_lon = client.get("/api/markets?lat=48.1351&radius_km=50")
+    radius_only = client.get("/api/markets?radius_km=50")
+
+    assert missing_lon.status_code == 422
+    assert missing_lon.json()["detail"] == "lat and lon must be provided together"
+    assert radius_only.status_code == 422
+    assert radius_only.json()["detail"] == "radius_km requires lat and lon"
+
+
 def test_hide_market(client: TestClient, session: Session):
     m = _make_market(session, name="ToHide", source_url="https://example.com/hide")
     r = client.post(f"/api/markets/{m.id}/hide")

@@ -57,6 +57,11 @@ async def list_markets(
     market_type: list[str] = Query(default=[]),
 ) -> list[MarketOut]:
     """Return markets matching the given filters."""
+    if (lat is None) != (lon is None):
+        raise HTTPException(status_code=422, detail="lat and lon must be provided together")
+    if radius_km is not None and (lat is None or lon is None):
+        raise HTTPException(status_code=422, detail="radius_km requires lat and lon")
+
     stmt = select(Market)
     if not include_hidden:
         stmt = stmt.where(Market.hidden == False)  # noqa: E712
@@ -74,12 +79,11 @@ async def list_markets(
         dist: float | None = None
         market_lat = m.latitude
         market_lon = m.longitude
-        if (
-            lat is not None
-            and lon is not None
-            and market_lat is not None
-            and market_lon is not None
-        ):
+        if lat is not None and lon is not None:
+            # A spatial result must always have a meaningful distance. Markets
+            # without coordinates remain available to non-spatial queries.
+            if market_lat is None or market_lon is None:
+                continue
             dist = round(distance_km(lat, lon, market_lat, market_lon), 1)
             if radius_km is not None and dist > radius_km:
                 continue
