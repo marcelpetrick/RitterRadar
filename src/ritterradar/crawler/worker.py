@@ -113,6 +113,9 @@ class CrawlWorker:
             if mdata.latitude is not None and mdata.longitude is not None:
                 # Adapter already resolved coordinates (e.g. from a JSON API)
                 lat, lon, uncertain = mdata.latitude, mdata.longitude, False
+            elif stored_coords := _get_trusted_coordinates(mdata):
+                # Avoid revalidating coordinates that already passed a prior crawl.
+                lat, lon = stored_coords
             else:
                 geo_query = _build_geo_query(mdata)
                 if geo_query:
@@ -208,39 +211,7 @@ def _upsert_market(
     source_name: str,
 ) -> tuple[int, int]:
     with Session(get_engine()) as session:
-        existing = None
-
-        # Phase 1a — cross-source dedup via postal code (most reliable).
-        if mdata.postal_code:
-            existing = session.exec(
-                select(Market).where(
-                    Market.name == mdata.name,
-                    Market.start_date == mdata.start_date,
-                    Market.postal_code == mdata.postal_code,
-                )
-            ).first()
-
-        # Phase 1b — cross-source dedup via city when no PLZ available.
-        # Catches cases where one source has PLZ and the other doesn't
-        # (e.g. Spectaculum stores city only; Vehi Mercatus adds PLZ later).
-        if existing is None and mdata.city:
-            existing = session.exec(
-                select(Market).where(
-                    Market.name == mdata.name,
-                    Market.start_date == mdata.start_date,
-                    Market.city == mdata.city,
-                )
-            ).first()
-
-        # Phase 2 — same-source re-crawl: match by source URL (existing behaviour).
-        if existing is None:
-            existing = session.exec(
-                select(Market).where(
-                    Market.name == mdata.name,
-                    Market.start_date == mdata.start_date,
-                    Market.source_url == mdata.source_url,
-                )
-            ).first()
+        existing = _find_existing_market(session, mdata)
 
         now = datetime.now(UTC)
         if existing is None:
@@ -294,3 +265,53 @@ def _upsert_market(
             session.add(existing)
             session.commit()
             return 0, 1
+
+
+def _get_trusted_coordinates(mdata: MarketData) -> tuple[float, float] | None:
+    with Session(get_engine()) as session:
+        existing = _find_existing_market(session, mdata)
+        if (
+            existing is None
+            or existing.geocode_uncertain
+            or existing.latitude is None
+            or existing.longitude is None
+        ):
+            return None
+        return existing.latitude, existing.longitude
+
+
+def _find_existing_market(session: Session, mdata: MarketData) -> Market | None:
+    existing = None
+
+    # Phase 1a — cross-source dedup via postal code (most reliable).
+    if mdata.postal_code:
+        existing = session.exec(
+            select(Market).where(
+                Market.name == mdata.name,
+                Market.start_date == mdata.start_date,
+                Market.postal_code == mdata.postal_code,
+            )
+        ).first()
+
+    # Phase 1b — cross-source dedup via city when no PLZ available.
+    # Catches cases where one source has PLZ and the other doesn't.
+    if existing is None and mdata.city:
+        existing = session.exec(
+            select(Market).where(
+                Market.name == mdata.name,
+                Market.start_date == mdata.start_date,
+                Market.city == mdata.city,
+            )
+        ).first()
+
+    # Phase 2 — same-source re-crawl: match by source URL.
+    if existing is None:
+        existing = session.exec(
+            select(Market).where(
+                Market.name == mdata.name,
+                Market.start_date == mdata.start_date,
+                Market.source_url == mdata.source_url,
+            )
+        ).first()
+
+    return existing

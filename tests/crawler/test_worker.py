@@ -7,7 +7,7 @@ from datetime import date
 from sqlmodel import Session, select
 
 from ritterradar.crawler.base_adapter import MarketData
-from ritterradar.crawler.worker import _upsert_market
+from ritterradar.crawler.worker import _get_trusted_coordinates, _upsert_market
 from ritterradar.models.market import Market
 
 
@@ -30,3 +30,27 @@ def test_upsert_repairs_uncertain_coordinates(session: Session):
     assert market.latitude == 49.88
     assert market.longitude == 7.75
     assert market.geocode_uncertain is False
+
+
+def test_trusted_coordinates_skip_revalidation():
+    trusted = MarketData(
+        name="Trusted coordinate test",
+        start_date=date(2030, 2, 1),
+        end_date=date(2030, 2, 2),
+        city="Potsdam",
+        postal_code="14467",
+        source_url="https://example.com/trusted-coordinate",
+    )
+    uncertain = MarketData(
+        name="Uncertain coordinate test",
+        start_date=date(2030, 3, 1),
+        end_date=date(2030, 3, 2),
+        city="Schöneberg",
+        postal_code="55444",
+        source_url="https://example.com/uncertain-coordinate",
+    )
+    _upsert_market(trusted, 52.4009, 13.0591, False, "Test")
+    _upsert_market(uncertain, 52.4821, 13.3551, True, "Test")
+
+    assert _get_trusted_coordinates(trusted) == (52.4009, 13.0591)
+    assert _get_trusted_coordinates(uncertain) is None

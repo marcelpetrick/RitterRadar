@@ -8,6 +8,11 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.0.52] — 2026-07-10
+### Fixed
+- Crawls reuse existing trusted coordinates so only missing or uncertain
+  locations consume new geocoder requests.
+
 ## [0.0.51] — 2026-07-10
 ### Fixed
 - Market geocoding now constrains Nominatim lookups by country, validates
