@@ -22,6 +22,14 @@ logger = logging.getLogger(__name__)
 
 GeoQuery = str | dict[str, str]
 
+_COUNTRY_DISPLAY_NAMES: dict[str, tuple[str, ...]] = {
+    "at": ("österreich", "austria"),
+    "ch": ("schweiz", "suisse", "svizzera", "switzerland"),
+    "de": ("deutschland", "germany"),
+    "lu": ("luxembourg", "luxemburg", "lëtzebuerg"),
+    "nl": ("nederland", "niederlande", "netherlands"),
+}
+
 # Nominatim ToS: maximum 1 request per second
 _RATE_LIMIT_SECONDS = 1.1
 _last_request_time: float = 0.0
@@ -59,6 +67,13 @@ async def geocode(
     cached = _cache_get(cache_key)
     if cached is not None:
         return cached
+
+    legacy_key = query.strip().lower()
+    if cache_key != legacy_key:
+        legacy = _cache_get(legacy_key)
+        if legacy is not None and _legacy_result_matches(legacy, country_code, postal_code):
+            _cache_set(cache_key, legacy)
+            return legacy
 
     lookup_query = _structured_query(postal_code, city) or query
     result = await _nominatim_lookup(
@@ -247,3 +262,20 @@ def _matches_expected_location(
 
 def _normalise_postal_code(postal_code: str | None) -> str:
     return "".join(character for character in (postal_code or "").casefold() if character.isalnum())
+
+
+def _legacy_result_matches(
+    result: GeoResult, country_code: str | None, postal_code: str | None
+) -> bool:
+    display_name = result.display_name.casefold()
+    if postal_code:
+        compact_display_name = _normalise_postal_code(display_name)
+        if _normalise_postal_code(postal_code) not in compact_display_name:
+            return False
+
+    if country_code:
+        expected_names = _COUNTRY_DISPLAY_NAMES.get(country_code.strip().casefold())
+        if expected_names is None or not any(name in display_name for name in expected_names):
+            return False
+
+    return True

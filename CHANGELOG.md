@@ -8,6 +8,11 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.0.53] — 2026-07-10
+### Changed
+- Existing geocoder cache entries are promoted without a network request when
+  their display name confirms the expected postal code and country.
+
 ## [0.0.52] — 2026-07-10
 ### Fixed
 - Crawls reuse existing trusted coordinates so only missing or uncertain
