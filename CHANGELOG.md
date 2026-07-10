@@ -8,6 +8,13 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.0.49] — 2026-07-10
+### Documentation
+- Documented the filtered upcoming-events preview and its copyable plain-text
+  list in the feature overview and map usage guide.
+- Clarified the default HTTP port and the commonly configured local port
+  `13370` used by the startup scripts through `.env`.
+
 ## [0.0.48] — 2026-07-10
 ### Fixed
 - Production startup now normalizes configured Uvicorn log levels to lowercase,

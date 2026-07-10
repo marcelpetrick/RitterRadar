@@ -38,6 +38,7 @@
 | **Distance filter** | Haversine straight-line distance, 0–1024 km radius from home pin |
 | **Time filter** | Month-range selector, current month through next 12 months |
 | **Type filter** | Medieval · Renaissance · Viking · Fantasy · Christmas |
+| **Upcoming-events list** | Chronological preview of the current filters with a one-click copyable plain-text list |
 | **Detail panel** | Click a marker for name, dates, location, program, source link, hide button |
 | **Crawler status** | Live badge counts + per-job log in the status bar |
 | **Activity log** | Collapsible live log panel in the map corner |
@@ -127,7 +128,9 @@ bash scripts/start.sh
 # or: ritterradar          (console script after pip install)
 ```
 
-Open your browser at **http://127.0.0.1:8000**
+Open your browser at **http://127.0.0.1:8000** when using the default port.
+If `.env` contains `RITTERRADAR_PORT=13370`, as in the local development setup,
+open **http://127.0.0.1:13370** instead. Both startup scripts print the exact URL.
 
 The app:
 1. Creates `data/ritterradar.db` automatically on first start
@@ -148,6 +151,8 @@ The app:
 | Check/uncheck **Markttyp** boxes | Show/hide event categories |
 | Hover a type checkbox or legend item | Shows tooltip with category meaning and data sources |
 | Click **Karte aktualisieren** | Re-applies all filters |
+| Expand **Nächste Märkte** | Shows every event matching the current map filters in chronological order |
+| Click **Kopieren** in the event list | Copies the complete filtered list with dates, locations, and distances as plain text |
 | **Hover** a marker | Shows name and date range |
 | **Click** a marker | Opens detail panel on the right |
 | **↗ Zur Originalseite** | Opens the source page in a new tab |
