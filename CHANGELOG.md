@@ -8,6 +8,11 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.0.48] — 2026-07-10
+### Fixed
+- Production startup now normalizes configured Uvicorn log levels to lowercase,
+  allowing values such as `RITTERRADAR_LOG_LEVEL=INFO`.
+
 ## [0.0.47] — 2026-07-09
 ### Added
 - Startup log now reports the running package version.

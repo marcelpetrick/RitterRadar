@@ -29,6 +29,7 @@ fi
 
 HOST="${RITTERRADAR_HOST:-127.0.0.1}"
 PORT="${RITTERRADAR_PORT:-8000}"
+LOG_LEVEL="$(printf '%s' "${RITTERRADAR_LOG_LEVEL:-info}" | tr '[:upper:]' '[:lower:]')"
 
 echo "==> Starting RitterRadar at http://${HOST}:${PORT}"
 echo "==> Open your browser at http://${HOST}:${PORT}"
@@ -38,4 +39,4 @@ cd "${PROJECT_ROOT}"
 exec "${UVICORN}" ritterradar.main:app \
     --host "${HOST}" \
     --port "${PORT}" \
-    --log-level "${RITTERRADAR_LOG_LEVEL:-info}"
+    --log-level "${LOG_LEVEL}"
