@@ -1,7 +1,7 @@
 # ⚔ RitterRadar
 
-[![CI](https://github.com/mpetrick/RitterRadar/actions/workflows/ci.yml/badge.svg)](https://github.com/mpetrick/RitterRadar/actions/workflows/ci.yml)
-[![Release](https://github.com/mpetrick/RitterRadar/actions/workflows/release.yml/badge.svg)](https://github.com/mpetrick/RitterRadar/actions/workflows/release.yml)
+[![CI](https://github.com/marcelpetrick/RitterRadar/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/marcelpetrick/RitterRadar/actions/workflows/ci.yml)
+[![Release](https://github.com/marcelpetrick/RitterRadar/actions/workflows/release.yml/badge.svg?branch=master)](https://github.com/marcelpetrick/RitterRadar/actions/workflows/release.yml)
 
 > *Hearken, good traveller, and lend thine ear!*
 >
