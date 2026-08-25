@@ -8,6 +8,10 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.0.62] — 2026-08-25
+### Fixed
+- Corrected badge URLs in README (owner was mpetrick, should be marcelpetrick).
+
 ## [0.0.61] — 2026-08-25
 ### Added
 - CI pipeline (lint, type check, test across Python 3.12–3.14).
