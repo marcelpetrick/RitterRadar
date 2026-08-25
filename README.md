@@ -1,5 +1,8 @@
 # ⚔ RitterRadar
 
+[![CI](https://github.com/mpetrick/RitterRadar/actions/workflows/ci.yml/badge.svg)](https://github.com/mpetrick/RitterRadar/actions/workflows/ci.yml)
+[![Release](https://github.com/mpetrick/RitterRadar/actions/workflows/release.yml/badge.svg)](https://github.com/mpetrick/RitterRadar/actions/workflows/release.yml)
+
 > *Hearken, good traveller, and lend thine ear!*
 >
 > *RitterRadar is a cunning instrument, forged in the fires of Python, to aid thee in thy noble quest: the discovery of medieval markets, Renaissance fairs, Viking spectacles, and Christmas revelries of the ancient style - across the German lands and beyond.*
