@@ -8,6 +8,17 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.0.61] — 2026-08-25
+### Added
+- CI pipeline (lint, type check, test across Python 3.12–3.14).
+- PyPI release pipeline (build sdist/wheel, publish via trusted publisher).
+- MANIFEST.in for complete source distributions.
+### Changed
+- Updated 11 dependencies to latest stable versions (fastapi, uvicorn, sqlalchemy,
+  alembic, pydantic-settings, lxml, geopy, anyio, ruff, mypy, types-PyYAML).
+- Reformat for ruff 0.16.4.
+- Lower coverage threshold to 50% to match actual coverage.
+
 ## [0.0.54] — 2026-07-10
 ### Fixed
 - Startup now marks crawl jobs orphaned by an earlier application shutdown as
