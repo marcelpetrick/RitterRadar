@@ -34,6 +34,7 @@ def test_engine():
     SQLModel.metadata.create_all(engine)
 
     import ritterradar.database.engine as eng_mod
+
     eng_mod._engine = engine
     yield engine
     SQLModel.metadata.drop_all(engine)

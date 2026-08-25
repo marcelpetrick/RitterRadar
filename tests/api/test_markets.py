@@ -47,8 +47,12 @@ def test_list_markets_returns_market(client: TestClient, session: Session):
 
 
 def test_list_markets_date_filter(client: TestClient, session: Session):
-    _make_market(session, name="July", start_date=date(2026, 7, 1), source_url="https://example.com/jul")
-    _make_market(session, name="Dec", start_date=date(2026, 12, 1), source_url="https://example.com/dec")
+    _make_market(
+        session, name="July", start_date=date(2026, 7, 1), source_url="https://example.com/jul"
+    )
+    _make_market(
+        session, name="Dec", start_date=date(2026, 12, 1), source_url="https://example.com/dec"
+    )
     r = client.get("/api/markets?date_from=2026-07-01&date_to=2026-07-31")
     assert r.status_code == 200
     names = [m["name"] for m in r.json()]
@@ -58,11 +62,13 @@ def test_list_markets_date_filter(client: TestClient, session: Session):
 
 def test_list_markets_radius_filter(client: TestClient, session: Session):
     # Munich (~48.1, 11.6) — within 50 km of itself
-    _make_market(session, name="Near", latitude=48.15, longitude=11.60,
-                 source_url="https://example.com/near")
+    _make_market(
+        session, name="Near", latitude=48.15, longitude=11.60, source_url="https://example.com/near"
+    )
     # Hamburg (far away from Munich)
-    _make_market(session, name="Far", latitude=53.57, longitude=10.02,
-                 source_url="https://example.com/far")
+    _make_market(
+        session, name="Far", latitude=53.57, longitude=10.02, source_url="https://example.com/far"
+    )
     r = client.get("/api/markets?lat=48.1351&lon=11.5820&radius_km=50")
     assert r.status_code == 200
     names = [m["name"] for m in r.json()]
@@ -70,9 +76,7 @@ def test_list_markets_radius_filter(client: TestClient, session: Session):
     assert "Far" not in names
 
 
-def test_spatial_filter_excludes_market_without_coordinates(
-    client: TestClient, session: Session
-):
+def test_spatial_filter_excludes_market_without_coordinates(client: TestClient, session: Session):
     _make_market(
         session,
         name="Unknown location",
@@ -86,9 +90,7 @@ def test_spatial_filter_excludes_market_without_coordinates(
     assert all(market["distance_km"] is not None for market in r.json())
 
 
-def test_non_spatial_filter_keeps_market_without_coordinates(
-    client: TestClient, session: Session
-):
+def test_non_spatial_filter_keeps_market_without_coordinates(client: TestClient, session: Session):
     _make_market(
         session,
         name="Unmapped",
@@ -135,10 +137,8 @@ def test_hide_market_not_found(client: TestClient):
 
 
 def test_market_type_filter(client: TestClient, session: Session):
-    _make_market(session, name="Med", market_type="medieval",
-                 source_url="https://example.com/med")
-    _make_market(session, name="Vik", market_type="viking",
-                 source_url="https://example.com/vik")
+    _make_market(session, name="Med", market_type="medieval", source_url="https://example.com/med")
+    _make_market(session, name="Vik", market_type="viking", source_url="https://example.com/vik")
     r = client.get("/api/markets?market_type=viking")
     assert r.status_code == 200
     types = {m["market_type"] for m in r.json()}

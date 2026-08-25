@@ -15,12 +15,15 @@ def test_get_settings_default(client: TestClient):
 
 
 def test_update_settings(client: TestClient):
-    r = client.put("/api/settings", json={
-        "home_latitude": 48.1351,
-        "home_longitude": 11.5820,
-        "home_label": "München",
-        "default_radius_km": 75.0,
-    })
+    r = client.put(
+        "/api/settings",
+        json={
+            "home_latitude": 48.1351,
+            "home_longitude": 11.5820,
+            "home_label": "München",
+            "default_radius_km": 75.0,
+        },
+    )
     assert r.status_code == 200
     data = r.json()
     assert data["home_latitude"] == pytest.approx(48.1351)
