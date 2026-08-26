@@ -17,9 +17,10 @@
 
 **Author: Marcel Petrick <mail@marcelpetrick.it>**
 
-**Note: projected is generated with AI.**
-
 **License: GPLv3 or later. See `LICENSE`.**
+
+**Note: project is generated with AI.**
+
 > *"Free as in freedom — and as in the freedom to roam medieval markets."*
 
 ### current state web UI
