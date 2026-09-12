@@ -4,14 +4,14 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ritterradar"
-version = "0.0.63"
+version = "0.0.64"
 description = "Discover German medieval markets, Renaissance festivals, and Viking fairs on an interactive map"
 authors = [{name = "Marcel Petrick", email = "mail@marcelpetrick.it"}]
-license = {text = "GPL-3.0-or-later"}
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE"]
 readme = "README.md"
 requires-python = ">=3.12"
 classifiers = [
-    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
