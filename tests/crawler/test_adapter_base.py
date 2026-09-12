@@ -30,6 +30,8 @@ def test_registry_lists_all_adapters():
     assert "schwerttanz" in adapters
     assert "ritterschaft" in adapters
     assert "mittelaltermarkt" in adapters
+    assert "fyndling" in adapters
+    assert "mittelaltermarkt_info" in adapters
 
 
 def test_registry_get_adapter_unknown():

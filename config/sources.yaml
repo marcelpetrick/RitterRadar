@@ -11,9 +11,10 @@
 #   crawl_interval_hours:  Minimum hours between re-crawls (default: 24)
 
 sources:
-  # ── ACTIVE SOURCES (verified working 2026-06-25) ──────────────────────
+  # ── ACTIVE SOURCES (verified working 2026-09-13) ──────────────────────
 
-  # 800+ events per year. Table at /mittelalterfeste-{YEAR}-nach-datum.php.
+  # 900+ events per year. Yearly list pages are discovered from homepage
+  # links ("*-{YEAR}-nach-datum.php"); the file name changed for 2027.
   # Columns: start date | end date | event name (button) | PLZ | city.
   - name: "Mittelalterkalender.info"
     url: "https://www.mittelalterkalender.info"
@@ -71,6 +72,23 @@ sources:
   - name: "Taterman.at"
     url: "https://www.taterman.at"
     adapter: "taterman_at"
+    enabled: true
+    crawl_interval_hours: 24
+
+  # Fyndling.de — European market directory, one server-rendered table.
+  # ~2,700 rows for the current year; ~1,300 in DE/AT/CH/LI/LU are kept.
+  # Page: /maerkte.html (rows with data-date; foreign rows carry "(🇫🇷FR)").
+  - name: "Fyndling.de"
+    url: "https://fyndling.de/maerkte.html"
+    adapter: "fyndling"
+    enabled: true
+    crawl_interval_hours: 24
+
+  # Mittelaltermarkt-info.de — hand-curated lists per country (DE, AT, CH).
+  # ~300 events: "DD.MM. – DD.MM. YYYY, Name, [Venue,] PLZ City, State".
+  - name: "Mittelaltermarkt-info.de"
+    url: "https://mittelaltermarkt-info.de/mittelaltermaerkte-in-deutschland/"
+    adapter: "mittelaltermarkt_info"
     enabled: true
     crawl_interval_hours: 24
 

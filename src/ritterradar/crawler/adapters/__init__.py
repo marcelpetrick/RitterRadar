@@ -3,11 +3,13 @@
 """Crawler adapters — imported here so the registry picks them all up."""
 
 from ritterradar.crawler.adapters import (  # noqa: F401
+    fyndling,
     generic_table,
     marktkalendarium,
     mittelalterfeste,
     mittelalterkalender_info,
     mittelaltermarkt,
+    mittelaltermarkt_info,
     mittelaltermarkt_online,
     ritterschaft,
     schwerttanz,
