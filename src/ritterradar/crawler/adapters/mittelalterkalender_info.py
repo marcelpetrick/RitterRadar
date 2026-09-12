@@ -7,8 +7,14 @@
 # (at your option) any later version.
 """Adapter for mittelalterkalender.info — largest German medieval event calendar.
 
-Page structure (verified 2026-06-25):
-  URL: /mittelaltermarkt/mittelalterfeste-{YEAR}-nach-datum.php
+Page structure (verified 2026-09-13):
+  The yearly list pages are linked from the homepage, and their file names
+  change between years:
+    2026: /mittelaltermarkt/mittelalterfeste-2026-nach-datum.php
+    2027: /mittelaltermarkt/historische-feste-mittelaltermaerkte-und-fantasy-
+          festivals-2027-nach-datum.php
+  The adapter therefore discovers "*-{YEAR}-nach-datum.php" links on the
+  homepage and only falls back to the known name patterns.
   Each event is a <tr class="isbfilter"> with 6 cells:
     [0] start date text + " bis " span  → strip to "DD.MM.YYYY"
     [1] end date "DD.MM.YYYY"
@@ -31,10 +37,17 @@ from ritterradar.crawler.registry import register
 
 logger = logging.getLogger(__name__)
 
-__version__ = "0.1.0"
-_VERIFIED_DATE = "2026-06-25"
+__version__ = "0.2.0"
+_VERIFIED_DATE = "2026-09-13"
 
 BASE = "https://www.mittelalterkalender.info"
+_HOME = f"{BASE}/"
+# Known list-page names, newest first; used when homepage discovery fails.
+_LIST_PATTERNS = (
+    "historische-feste-mittelaltermaerkte-und-fantasy-festivals-{year}-nach-datum.php",
+    "mittelalterfeste-{year}-nach-datum.php",
+)
+_YEAR_LINK_RE = re.compile(r"/mittelaltermarkt/[\w-]*-(\d{4})-nach-datum\.php$")
 _DATE_FMT = "%d.%m.%Y"
 _DATE_RE = re.compile(r"\d{2}\.\d{2}\.\d{4}")
 # Detect type from event title
@@ -46,8 +59,22 @@ _TYPE_KEYWORDS: dict[str, list[str]] = {
 }
 
 
-def _list_url(year: int) -> str:
-    return f"{BASE}/mittelaltermarkt/mittelalterfeste-{year}-nach-datum.php"
+def _fallback_urls(year: int) -> list[str]:
+    return [f"{BASE}/mittelaltermarkt/{p.format(year=year)}" for p in _LIST_PATTERNS]
+
+
+def _discover_list_urls(html: str) -> dict[int, str]:
+    """Map year → list-page URL from the "nach Datum" links on the homepage."""
+    soup = BeautifulSoup(html, "lxml")
+    found: dict[int, str] = {}
+    for link in soup.find_all("a", href=True):
+        href = link.get("href")
+        if not isinstance(href, str):
+            continue
+        m = _YEAR_LINK_RE.search(href)
+        if m:
+            found.setdefault(int(m.group(1)), urljoin(_HOME, href))
+    return found
 
 
 def _parse_date(text: str) -> date | None:
@@ -117,23 +144,38 @@ class MittelalterkalenderInfoAdapter(AbstractCrawlerAdapter):
         results: list[MarketData] = []
         today = date.today()
 
+        discovered: dict[int, str] = {}
+        try:
+            home = await client.get(_HOME)
+            home.raise_for_status()
+            discovered = _discover_list_urls(home.text)
+        except Exception:
+            logger.warning(
+                "%s: homepage link discovery failed, using known URL patterns",
+                self.SOURCE_NAME,
+            )
+
         for year in (today.year, today.year + 1):
-            url = _list_url(year)
-            try:
-                response = await client.get(url)
-                response.raise_for_status()
-            except Exception:
-                logger.warning("%s: failed to fetch %s", self.SOURCE_NAME, url)
-                continue
-
-            soup = BeautifulSoup(response.text, "lxml")
-            rows = soup.find_all("tr", class_="isbfilter")
-            logger.info("%s: %d rows found for %d", self.SOURCE_NAME, len(rows), year)
-
-            for row in rows:
-                mdata = _parse_row(row)
-                if mdata:
-                    results.append(mdata)
+            candidates = [discovered[year]] if year in discovered else _fallback_urls(year)
+            row_count = 0
+            for url in candidates:
+                try:
+                    response = await client.get(url)
+                    response.raise_for_status()
+                except Exception:
+                    logger.warning("%s: failed to fetch %s", self.SOURCE_NAME, url)
+                    continue
+                soup = BeautifulSoup(response.text, "lxml")
+                rows = soup.find_all("tr", class_="isbfilter")
+                if not rows:
+                    continue
+                row_count = len(rows)
+                for row in rows:
+                    mdata = _parse_row(row)
+                    if mdata:
+                        results.append(mdata)
+                break
+            logger.info("%s: %d rows found for %d", self.SOURCE_NAME, row_count, year)
 
         logger.info("%s: scraped %d events total", self.SOURCE_NAME, len(results))
         return results
