@@ -8,6 +8,14 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.0.63] — 2026-09-13
+### Changed
+- Updated 13 dependencies to latest stable versions: fastapi 0.141.1,
+  uvicorn 0.52.4, sqlmodel 0.0.42, sqlalchemy 2.0.52, alembic 1.20.0,
+  pydantic-settings 2.15.0, lxml 6.1.3, geopy 2.5.0, anyio 4.15.1,
+  icalendar 7.3.0, ruff 0.16.7, mypy 2.3.1, types-PyYAML 6.0.12.20260906.
+- Pinned build-system requirements exactly (setuptools 84.0.0, wheel 0.48.0).
+
 ## [0.0.62] — 2026-08-25
 ### Fixed
 - Corrected badge URLs in README (owner was mpetrick, should be marcelpetrick).
