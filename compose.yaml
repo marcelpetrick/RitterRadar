@@ -1,0 +1,29 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Copyright (C) 2026 Marcel Petrick <mail@marcelpetrick.it>
+#
+# Run RitterRadar with Docker Compose:
+#   docker compose up -d        (pulls the published image)
+#   docker compose up --build   (builds from this checkout)
+#
+# Only the variables listed below are passed into the container. The local
+# .env is used for interpolation, so RITTERRADAR_HOST=127.0.0.1 from a native
+# setup does not break binding inside the container.
+
+services:
+  ritterradar:
+    image: ghcr.io/marcelpetrick/ritterradar:latest
+    build: .
+    init: true
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${RITTERRADAR_PUBLISH_PORT:-8000}:8000"
+    environment:
+      RITTERRADAR_GEOCODER_EMAIL: ${RITTERRADAR_GEOCODER_EMAIL:-ritterradar@localhost}
+      RITTERRADAR_WORKERS: ${RITTERRADAR_WORKERS:-3}
+      RITTERRADAR_LOG_LEVEL: ${RITTERRADAR_LOG_LEVEL:-INFO}
+      RITTERRADAR_CRAWL_INTERVAL_HOURS: ${RITTERRADAR_CRAWL_INTERVAL_HOURS:-24}
+    volumes:
+      - ritterradar-data:/app/data
+
+volumes:
+  ritterradar-data:

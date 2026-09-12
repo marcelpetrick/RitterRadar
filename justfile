@@ -57,3 +57,11 @@ crawl:
 # Run full CI pipeline: lint + types + tests
 ci:
     just lint && just types && just test
+
+# Build the container image from this checkout
+docker-build:
+    docker build -t ritterradar:local .
+
+# Run the locally built image on http://127.0.0.1:8000 (data kept in volume ritterradar-data)
+docker-run:
+    docker run --rm -p 127.0.0.1:8000:8000 -v ritterradar-data:/app/data ritterradar:local
