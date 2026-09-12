@@ -34,7 +34,7 @@
 | Feature | Description |
 |---|---|
 | **Auto-crawling** | Background workers harvest events from all configured sources on startup |
-| **7 active adapters** | mittelalterkalender.info, vehi-mercatus.de, spectaculum.de, marktkalendarium.de, mittelaltermarkt.online, taterman.at, trollfelsen.de |
+| **9 active adapters** | mittelalterkalender.info, vehi-mercatus.de, spectaculum.de, marktkalendarium.de, mittelaltermarkt.online, taterman.at, trollfelsen.de, fyndling.de, mittelaltermarkt-info.de |
 | **Multi-format parsing** | HTML scraping (BeautifulSoup), REST API (WordPress Events Calendar), iCal feeds (RFC 5545) |
 | **Deduplication** | Three-phase upsert (PLZ → city → source_url) merges the same event from multiple sources |
 | **Pre-geocoded fast path** | mittelaltermarkt.online supplies lat/lon directly — Nominatim skipped for ~530 events per crawl |
@@ -464,7 +464,7 @@ flowchart TB
     subgraph Engine["🕷 Crawler Engine"]
         Queue["CrawlQueue  ·  asyncio.Queue"]
         Workers["CrawlWorkers ×3  ·  PoliteHttpClient
-        7 adapters + generic_table fallback
+        9 adapters + generic_table fallback
         0.5–2 s polite delay · exponential backoff"]
         Queue --> Workers
     end
@@ -473,7 +473,8 @@ flowchart TB
         HTML["HTML scraping
         mittelalterkalender.info
         vehi-mercatus.de · spectaculum.de
-        marktkalendarium.de · trollfelsen.de"]
+        marktkalendarium.de · trollfelsen.de
+        fyndling.de · mittelaltermarkt-info.de"]
         REST["WordPress REST API
         mittelaltermarkt.online
         pre-geocoded lat/lon included"]

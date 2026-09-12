@@ -294,23 +294,29 @@ UniqueConstraint on `market(name, start_date, source_url)` — prevents duplicat
 
 ---
 
-## Active Crawler Sources (as of 2026-06-25)
+## Active Crawler Sources (as of 2026-09-13)
 
 ```mermaid
 graph LR
     YAML["config/sources.yaml"]:::config
 
-    subgraph ACTIVE["✅ Active — 3 sources"]
-        MKI["Mittelalterkalender.info\nadapter: mittelalterkalender_info\n~808 events / year\nURL: /mittelalterfeste-YEAR-nach-datum.php"]
-        VHM["Vehi Mercatus Marktkalender\nadapter: vehi_mercatus\n~287 DE events / year\nURL: /marktkalender/?ansicht=liste&land=Deutschland&..."]
-        SPE["Spectaculum.de (MPS)\nadapter: spectaculum\n9 premium events / year\nURL: homepage nav links /termine/SLUG/"]
+    subgraph ACTIVE["✅ Active — 9 sources"]
+        MKI["Mittelalterkalender.info\nadapter: mittelalterkalender_info\n~900 events / year\nyear pages discovered from homepage links"]
+        VHM["Vehi Mercatus Marktkalender\nadapter: vehi_mercatus\n~430 DE events (current + next year)\nURL: /marktkalender/?ansicht=liste&land=Deutschland&..."]
+        SPE["Spectaculum.de (MPS)\nadapter: spectaculum\n~8 premium events / year\nURL: homepage nav links /termine/SLUG/"]
+        MKA["Pfalzis Marktkalendarium\nadapter: marktkalendarium\n~170 events (current + next year)\nURL: /maerkteYEAR.php"]
+        MMO["Mittelaltermarkt.online\nadapter: mittelaltermarkt_online\n~790 events · REST API · pre-geocoded"]
+        TRO["Trollfelsen.de\nadapter: trollfelsen\n~11 confirmed vendor appearances"]
+        TAT["Taterman.at\nadapter: taterman_at\n~40 Austrian events · iCal feed"]
+        FYN["Fyndling.de\nadapter: fyndling\n~1,300 DE/AT/CH/LU events\nURL: /maerkte.html"]
+        MMI["Mittelaltermarkt-info.de\nadapter: mittelaltermarkt_info\n~300 DE/AT/CH events\nURL: one list page per country"]
     end
 
-    subgraph DISABLED["❌ Disabled — 4 sources (documented reason)"]
+    subgraph DISABLED["❌ Disabled — 4 sources (re-checked 2026-09-13)"]
         D1["Mittelalterfeste.de\nDomain expired → parked on sedo.com"]
         D2["Schwerttanz.de\nWrong TLS cert · no market calendar"]
         D3["Ritterschaft.de\nWrong TLS cert · resolves to droids.de"]
-        D4["Mittelaltermarkt.com\nDomain for sale · JS-only page"]
+        D4["Mittelaltermarkt.com\nDomain for sale (elitedomains.de)"]
     end
 
     YAML --> ACTIVE

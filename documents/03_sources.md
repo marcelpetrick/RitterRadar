@@ -1,6 +1,27 @@
 # RitterRadar — Crawler Sources Documentation
 
-Last verified: 2026-06-26 · 7 active sources · 4 disabled
+Last verified: 2026-09-13 · 9 active sources · 4 disabled
+
+---
+
+## Source Review 2026-09-13
+
+Every configured source was re-checked with `scripts/crawl_e2e_test.py` and
+new calendars were searched for. Events returned per adapter on that day:
+
+| Source | Events | Change |
+|---|---|---|
+| Mittelalterkalender.info | 895 (2026) + 42 (2027) | Fixed: 2027 list page was renamed, adapter now discovers year pages |
+| Vehi Mercatus Marktkalender | 431 | — |
+| Spectaculum.de | 8 | — |
+| Pfalzis Marktkalendarium | 169 | — |
+| Mittelaltermarkt.online | 787 | — |
+| Trollfelsen.de | 11 | — |
+| Taterman.at | 40 | — |
+| **Fyndling.de** | ~1,320 | **New** |
+| **Mittelaltermarkt-info.de** | ~320 | **New** |
+
+The four disabled sources are still unavailable (see below).
 
 ---
 
@@ -10,10 +31,10 @@ Last verified: 2026-06-26 · 7 active sources · 4 disabled
 
 | Property | Value |
 |---|---|
-| **Adapter** | `mittelalterkalender_info` |
+| **Adapter** | `mittelalterkalender_info` · `__version__ = "0.2.0"` |
 | **Base URL** | https://www.mittelalterkalender.info |
-| **List URL** | `/mittelaltermarkt/mittelalterfeste-{YEAR}-nach-datum.php` |
-| **Events/year** | ~808 (2026) |
+| **List URL** | discovered from homepage links matching `/mittelaltermarkt/*-{YEAR}-nach-datum.php` |
+| **Events/year** | ~900 (2026) |
 | **Coverage** | Germany + Europe |
 | **Update frequency** | Continuous community submissions |
 
@@ -31,7 +52,10 @@ Each event is a `<tr class="isbfilter">` row in a Semantic UI table:
 
 **Known quirks:**
 - Cell[0] text renders as `"DD.MM.YYYYbis"` (no space between date and span text) — extract with `re.search(r"\d{2}\.\d{2}\.\d{4}")`.
-- 2027 list page exists but may be empty until events are submitted.
+- List page names change between years: 2026 is `mittelalterfeste-2026-nach-datum.php`,
+  2027 is `historische-feste-mittelaltermaerkte-und-fantasy-festivals-2027-nach-datum.php`
+  (the old-style 2027 URL answers `302`). The adapter reads the homepage links and
+  only falls back to both known name patterns.
 - Detail pages use POST via `<button formaction>` — not directly accessible via GET.
 
 ---
@@ -311,14 +335,91 @@ Wien and Salzburg are kept (both province and city).
 
 ---
 
-## Disabled Sources (Investigation Required)
+### 8. Fyndling.de
+
+| Property | Value |
+|---|---|
+| **Adapter** | `fyndling` · `__version__ = "0.1.0"` |
+| **Base URL** | https://fyndling.de |
+| **List URL** | `/maerkte.html` (single page, current year only) |
+| **Events/year** | ~2,700 across Europe; ~1,320 kept (DE, AT, CH, LI, LU) |
+| **Coverage** | Europe; adapter keeps DACH + Liechtenstein + Luxembourg |
+| **robots.txt** | Allows crawling; only `/admin/` disallowed |
+
+**Page structure:** one table; event rows carry `data-date`, heading rows do not.
+
+```html
+<tr data-date="2026-01-02" id="9e0b278e7ed68c06">
+  <td>02.01.2026 - 04.01.2026</td>                       <!-- or "04.01.2026" -->
+  <td><a href="https://fyndling.de/e/9e0b278e7ed68c06">Name</a></td>
+  <td>63785 Obernburg am Main</td>                        <!-- German rows -->
+</tr>
+<!-- foreign rows: <td>21700 Nuits-Saint-Georges (🇫🇷FR)</td> -->
+```
+
+**Known quirks:**
+- German rows have no country suffix; all others end with `(<flag>XX)`.
+- ~90 DACH rows give only a city or only a postal code; 12 Austrian rows have no
+  location and are skipped.
+- `?year=2027` returns the same 2026 page — no next-year data yet.
+- Non-DACH rows are dropped to avoid ~1,400 Nominatim lookups for events far
+  outside the map's focus.
+
+---
+
+### 9. Mittelaltermarkt-info.de
+
+| Property | Value |
+|---|---|
+| **Adapter** | `mittelaltermarkt_info` · `__version__ = "0.1.0"` |
+| **Base URL** | https://mittelaltermarkt-info.de |
+| **List URLs** | `/mittelaltermaerkte-in-deutschland/`, `/mittelalterliche-events-oesterreich/`, `/mittelalterliche-events-in-der-schweiz/` |
+| **Events/year** | ~320 (DE ~235, AT ~55, CH ~35) |
+| **Coverage** | Germany, Austria, Switzerland (FR/IT/NL pages exist but are not crawled) |
+| **robots.txt** | Allows all crawling |
+
+**Page structure:** one `<p>` per event under `<h3>` month headings. The
+WordPress REST API exposes no event data, so the HTML is parsed.
+
+```html
+<p><strong>04.09. – 06.09. 2026, <a href="/event-pro/SLUG/">Name</a>,
+   Schloss Hellenstein, 89522 Heidenheim an der Brenz, Baden-Württemberg</strong></p>
+```
+
+**Date variants:** `3.9. – 6.9. 2026` · `05.01. 2026` · `12.12.- 13.12. 2026` ·
+`10.10. bis 11.10.2026` · `17.-18.10.2026` · `05. – 06.09.2026`.
+Cross-year ranges (`27.12. – 02.01. 2027`) put the start in the previous year.
+
+**Known quirks:**
+- ~75 entries have no `/event-pro/` link; they are kept and point to the list page.
+- Postal codes appear as `89522`, `5450`, `A-3242` or `CH-8212`; Swiss city names
+  may carry a canton suffix (`Laupen BE`), which is stripped.
+- Entries like `Termin 2026 noch nicht bekannt` have no date and are skipped.
+- Pages may keep entries from the previous year (the Swiss page still listed two
+  2025 events); only events starting in the current year or later are returned.
+
+---
+
+## Disabled Sources (re-checked 2026-09-13, still unavailable)
 
 | Source | URL | Reason disabled |
 |---|---|---|
 | **Mittelalterfeste.de** | `https://www.mittelalterfeste.de/termine` | Domain expired; `GET /termine` → 303 → `sedo.com` (parked) |
-| **Schwerttanz Marktkalender** | `https://www.schwerttanz.de/marktkalender` | TLS cert issued for `hypenat-casa-25.netboot.nethost.cz` (wrong host); `/marktkalender` → 404 |
-| **Ritterschaft.de** | `https://www.ritterschaft.de/termine` | TLS cert issued for `mx01.droids.de`; domain returns `droids.de` content |
-| **Mittelaltermarkt.com** | `https://www.mittelaltermarkt.com/marktkalender` | Domain for sale — returns a JS spinner with no real content |
+| **Schwerttanz Marktkalender** | `https://www.schwerttanz.de/marktkalender` | TLS verification fails (cert for `hypenat-casa-25.netboot.nethost.cz`); not a market calendar |
+| **Ritterschaft.de** | `https://www.ritterschaft.de/termine` | TLS verification fails (cert for `mx01.droids.de`); domain returns `droids.de` content |
+| **Mittelaltermarkt.com** | `https://www.mittelaltermarkt.com/marktkalender` | Domain for sale — redirects to an elitedomains.de sale page |
+
+---
+
+## Evaluated and Rejected Candidates (2026-09-13)
+
+| Site | Why not added |
+|---|---|
+| mittelalter-zeitreise.de | Calendar reports "keine Termine für das Jahr 2026" — no current data |
+| mittelalterkalender.at | Only 12 events; calendar data is loaded from `/api/`, which robots.txt disallows |
+| eventgilde.com | Nuxt app; list pages carry no dates (one request per event needed) and include placeholder entries |
+| mirimor.ch | Free-text Jimdo pages without parseable dates; `Crawl-Delay: 5` |
+| carnica-spectaculi.de | Single organizer (~12 events), already covered by the aggregators |
 
 ---
 

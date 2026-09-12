@@ -8,6 +8,29 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.0.70] — 2026-09-13
+### Documentation
+- Sources documentation: review of all sources on 2026-09-13 with event counts,
+  sections for Fyndling.de and Mittelaltermarkt-info.de, re-checked disabled
+  sources and a table of evaluated but rejected candidate sites.
+- README and architecture overview list 9 active adapters.
+
+## [0.0.69] — 2026-09-13
+### Added
+- `fyndling` adapter: ~1,300 DE/AT/CH/LI/LU events from the fyndling.de market
+  list (`/maerkte.html`).
+- `mittelaltermarkt_info` adapter: ~320 events from the curated DE, AT and CH
+  lists on mittelaltermarkt-info.de, including unlinked entries and all observed
+  date notations.
+- Offline fixture tests for the new adapters; map filter tooltips name the new
+  sources.
+
+## [0.0.68] — 2026-09-13
+### Fixed
+- Mittelalterkalender.info returned no events for next year because the site
+  renamed its yearly list page. The adapter (0.2.0) now discovers the list pages
+  from homepage links and falls back to both known URL patterns.
+
 ## [0.0.67] — 2026-09-13
 ### Documentation
 - README: Docker section (published image tags, `docker run`, Compose, local
