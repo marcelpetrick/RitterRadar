@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/marcelpetrick/RitterRadar/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/marcelpetrick/RitterRadar/actions/workflows/ci.yml)
 [![Release](https://github.com/marcelpetrick/RitterRadar/actions/workflows/release.yml/badge.svg?branch=master)](https://github.com/marcelpetrick/RitterRadar/actions/workflows/release.yml)
+[![Docker](https://github.com/marcelpetrick/RitterRadar/actions/workflows/docker.yml/badge.svg?branch=master)](https://github.com/marcelpetrick/RitterRadar/pkgs/container/ritterradar)
 
 > *Hearken, good traveller, and lend thine ear!*
 >
@@ -53,8 +54,7 @@
 
 ## Requirements
 
-- **Python 3.12+** (tested on 3.14)
-- **pip** (no other system dependencies)
+- **Python 3.12+** (tested on 3.12, 3.13 and 3.14) and **pip** — *or* just **Docker** (see [Docker](#docker))
 - **Internet access** for map tiles and initial crawling
 
 ---
@@ -65,7 +65,7 @@
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/mpetrick/RitterRadar.git
+git clone https://github.com/marcelpetrick/RitterRadar.git
 cd RitterRadar
 
 # 2. Copy and edit the environment file
@@ -88,6 +88,90 @@ source .venv/bin/activate
 pip install -e ".[dev]"
 alembic upgrade head
 ```
+
+---
+
+## Docker
+
+A multi-arch image (`linux/amd64`, `linux/arm64`) is published to the GitHub
+Container Registry as
+[`ghcr.io/marcelpetrick/ritterradar`](https://github.com/marcelpetrick/RitterRadar/pkgs/container/ritterradar).
+
+| Tag | Content |
+|---|---|
+| `latest` | Most recent release |
+| `X.Y.Z`, `X.Y` | A specific release (e.g. `0.0.67`, `0.0`) |
+| `edge` | Latest build of `master` |
+| `sha-<commit>` | Build of one exact commit |
+
+### Run the published image
+
+```bash
+docker run -d --name ritterradar \
+  -p 127.0.0.1:8000:8000 \
+  -v ritterradar-data:/app/data \
+  -e RITTERRADAR_GEOCODER_EMAIL=your@email.example \
+  ghcr.io/marcelpetrick/ritterradar:latest
+```
+
+Then open **http://127.0.0.1:8000**. Stop with `docker stop ritterradar`;
+the database survives in the `ritterradar-data` volume.
+
+### Docker Compose
+
+```bash
+docker compose up -d                                 # published image
+docker compose up -d --build                         # build from this checkout
+RITTERRADAR_PUBLISH_PORT=13370 docker compose up -d  # different host port
+```
+
+`compose.yaml` passes only `RITTERRADAR_GEOCODER_EMAIL`, `RITTERRADAR_WORKERS`,
+`RITTERRADAR_LOG_LEVEL` and `RITTERRADAR_CRAWL_INTERVAL_HOURS` into the
+container (values are taken from your shell or `.env`), so a native
+`RITTERRADAR_HOST=127.0.0.1` does not leak in and break binding.
+
+### Build the image yourself
+
+```bash
+docker build -t ritterradar:local .     # or: just docker-build
+docker run --rm -p 127.0.0.1:8000:8000 \
+  -v ritterradar-data:/app/data ritterradar:local   # or: just docker-run
+```
+
+### Image details
+
+- Based on `python:3.14-slim` (Debian trixie), runs as the non-root user
+  `ritter` (UID/GID 10001) and binds to `0.0.0.0:8000` inside the container.
+- Data lives in the volume `/app/data` (`RITTERRADAR_DB_PATH=/app/data/ritterradar.db`).
+  For a bind mount instead of a named volume, make the host directory writable
+  for UID 10001: `mkdir -p data && sudo chown 10001:10001 data`.
+- All `RITTERRADAR_*` variables from [Configuration](#configuration) work as
+  `-e` options. To use your own source list, mount it read-only:
+  `-v "$PWD/config/sources.yaml:/app/config/sources.yaml:ro"`.
+- A `HEALTHCHECK` polls `/health`; `docker ps` shows the container as `healthy`.
+- Images carry SBOM and build provenance; verify with
+  `gh attestation verify oci://ghcr.io/marcelpetrick/ritterradar:latest --owner marcelpetrick`.
+
+### Publishing pipeline
+
+`.github/workflows/docker.yml` builds the image, starts it and smoke-tests
+`/health`, `/`, static files and the crawl API before pushing:
+
+| Trigger | Result |
+|---|---|
+| Pull request | Build + smoke test only, nothing pushed |
+| Push to `master` | `:edge`, `:sha-<commit>` |
+| Tag `vX.Y.Z` | `:X.Y.Z`, `:X.Y`, `:latest`, `:sha-<commit>` |
+
+To cut a release: bump `version` in `pyproject.toml`, commit, then
+
+```bash
+git tag -a v0.0.67 -m "RitterRadar 0.0.67" && git push origin v0.0.67
+gh release create v0.0.67 --verify-tag --generate-notes
+```
+
+The tag publishes the image; the GitHub release triggers `release.yml`, which
+attaches the wheel and sdist to the release.
 
 ---
 

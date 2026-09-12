@@ -437,6 +437,41 @@ graph TB
 | No brotli | Accept-Encoding omitted from headers | httpx cannot decode brotli without the `brotli` package; omitting forces gzip/deflate which httpx handles natively |
 | Frontend logging | Activity log panel + `rr-log` CustomEvent bus | Every UI action shows visible feedback without alert() dialogs |
 | Module deduplication | ES module `import` + `window` event bus | `activity-log.js` is imported by three modules but only evaluated once |
+| Container image | One image, one process, SQLite on a volume | Keeps the single-process design; `docker run` replaces venv setup without adding services |
+
+---
+
+## Deployment — Container Image
+
+The same single process can run natively (`scripts/start.sh`) or as a container.
+The image is published to `ghcr.io/marcelpetrick/ritterradar` by
+`.github/workflows/docker.yml`.
+
+```mermaid
+flowchart LR
+    subgraph GH["GitHub Actions · docker.yml"]
+        B1["Build amd64<br/>(buildx, GHA cache)"] --> S["Smoke test<br/>/health · / · /static · /api/crawl/status"]
+        S --> B2["Build + push<br/>linux/amd64 + linux/arm64<br/>SBOM · provenance"]
+    end
+    B2 -->|"master → :edge<br/>vX.Y.Z → :X.Y.Z :X.Y :latest"| GHCR[("ghcr.io/marcelpetrick/ritterradar")]
+
+    subgraph HOST["User machine"]
+        C["Container · uid 10001<br/>uvicorn 0.0.0.0:8000<br/>HEALTHCHECK /health"]
+        V[("Volume /app/data<br/>ritterradar.db")]
+        C <--> V
+    end
+    GHCR -->|"docker pull"| C
+    Browser["Browser"] -->|"127.0.0.1:8000"| C
+```
+
+| Aspect | Choice |
+|---|---|
+| Base image | `python:3.14.7-slim-trixie`, two-stage build (venv built in stage 1, copied into stage 2) |
+| Dependencies | Installed from pinned `pyproject.toml` versions as binary wheels only |
+| User | Non-root `ritter` (UID/GID 10001) |
+| Configuration | `RITTERRADAR_*` environment variables; image sets `HOST=0.0.0.0`, `DB_PATH=/app/data/ritterradar.db`, `SOURCES_FILE=/app/config/sources.yaml` |
+| Persistence | `/app/data` volume holds the SQLite database |
+| Health | Docker `HEALTHCHECK` calls `GET /health` with the bundled Python |
 
 ---
 
@@ -511,7 +546,14 @@ RitterRadar/
 ├── docs/
 │   └── architecture.md              # this file
 ├── alembic/                         # DB migration history
-├── pyproject.toml                   # version 0.0.26 · single source of truth
+├── .github/workflows/
+│   ├── ci.yml                       # lint · types · tests (Python 3.12–3.14)
+│   ├── docker.yml                   # build · smoke test · publish to ghcr.io
+│   └── release.yml                  # attach wheel + sdist to GitHub releases
+├── Dockerfile                       # two-stage image, non-root, healthcheck
+├── .dockerignore                    # allow-list build context
+├── compose.yaml                     # docker compose up -d
+├── pyproject.toml                   # version · single source of truth
 ├── .env.example                     # copy to .env before first run
 └── README.md
 ```

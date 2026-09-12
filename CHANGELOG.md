@@ -8,6 +8,37 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.0.67] — 2026-09-13
+### Documentation
+- README: Docker section (published image tags, `docker run`, Compose, local
+  build, image details, publishing pipeline, release procedure), Docker badge,
+  fixed clone URL.
+- Architecture: container deployment section with pipeline diagram, design
+  decision and updated directory layout.
+
+## [0.0.66] — 2026-09-13
+### Added
+- Docker workflow: builds the image, smoke-tests `/health`, `/`, static files
+  and the crawl API, then publishes a multi-arch (amd64/arm64) image with SBOM
+  and build provenance to `ghcr.io/marcelpetrick/ritterradar`
+  (`:edge` from master, `:X.Y.Z`/`:X.Y`/`:latest` from `vX.Y.Z` tags).
+### Changed
+- CI now runs the quality gate on Python 3.12, 3.13 and 3.14.
+- Release workflow attaches the wheel and sdist to the GitHub release; build
+  tools pinned (build 1.6.1, twine 7.0.0).
+- All GitHub Actions updated to their latest releases and pinned by commit SHA.
+
+## [0.0.65] — 2026-09-13
+### Added
+- Two-stage `Dockerfile` on `python:3.14.7-slim-trixie`: non-root user,
+  `/app/data` volume, healthcheck against `/health`.
+- Allow-list `.dockerignore`, `compose.yaml`, `just docker-build` / `docker-run`.
+
+## [0.0.64] — 2026-09-13
+### Changed
+- Package metadata uses an SPDX license expression (`GPL-3.0-or-later`) instead
+  of the license table and classifier deprecated by setuptools 84.
+
 ## [0.0.63] — 2026-09-13
 ### Changed
 - Updated 13 dependencies to latest stable versions: fastapi 0.141.1,
