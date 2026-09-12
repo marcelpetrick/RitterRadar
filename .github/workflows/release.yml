@@ -1,5 +1,9 @@
 name: Release
 
+# Runs when a GitHub release is published: builds the sdist and wheel and
+# attaches them to the release. The container image for the release tag is
+# published by the Docker workflow.
+
 on:
   release:
     types: [published]
@@ -8,26 +12,30 @@ jobs:
   release:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
-      packages: write
+      contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
-          python-version: "3.12"
+          python-version: "3.14"
 
       - name: Install build tools
         run: |
           python -m pip install --upgrade pip
-          pip install build twine
+          pip install build==1.6.1 twine==7.0.0
 
       - name: Build package
         run: python -m build
 
       - name: Check metadata
-        run: twine check dist/*
+        run: twine check --strict dist/*
+
+      - name: Attach distributions to release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" dist/* --clobber
 
       # - name: Publish to PyPI
       #   env:
