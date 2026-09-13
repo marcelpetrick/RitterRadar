@@ -8,6 +8,41 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.0.77] — 2026-09-13
+### Changed
+- Coverage gate raised from 50% to the 90% goal of the project vision; the
+  suite now covers 98% of the code (146 tests, all offline).
+
+## [0.0.76] — 2026-09-13
+### Tests
+- Fixture tests for the disabled heuristic adapters (mittelalterfeste,
+  mittelaltermarkt.com, schwerttanz, ritterschaft) and `generic_table`.
+
+## [0.0.75] — 2026-09-13
+### Tests
+- Fixture tests for the Taterman.at iCal, Mittelaltermarkt.online REST API,
+  Vehi Mercatus, Marktkalendarium, Trollfelsen and Spectaculum adapters.
+
+## [0.0.74] — 2026-09-13
+### Tests
+- Index page, static cache headers, crawl API without a queue, geocode
+  endpoint, `run()` entry point and database engine creation.
+
+## [0.0.73] — 2026-09-13
+### Tests
+- Geocoder cache round trip, cached and constrained lookups, rate limiting,
+  error handling and coarse-result uncertainty.
+
+## [0.0.72] — 2026-09-13
+### Tests
+- Crawl worker job lifecycle (skipped, failed, completed, trusted-coordinate
+  reuse, record enrichment) and queue worker start/stop and source seeding.
+
+## [0.0.71] — 2026-09-13
+### Tests
+- Polite HTTP client retries, backoff and domain-drift guard; the offline
+  fake client now supports bytes, JSON, status codes and raised errors.
+
 ## [0.0.70] — 2026-09-13
 ### Documentation
 - Sources documentation: review of all sources on 2026-09-13 with event counts,
