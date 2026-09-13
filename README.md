@@ -389,9 +389,12 @@ pip install -e ".[dev]"
 ### Run tests
 
 ```bash
-pytest                       # with coverage report
+pytest                       # with coverage report; fails below 90 % coverage
 pytest --no-cov -x -q       # fast, stop on first failure
 ```
+
+The suite runs fully offline: crawler adapters are tested against HTML, JSON
+and iCal fixtures through a fake HTTP client, and the geocoder is stubbed.
 
 ### Lint and format
 

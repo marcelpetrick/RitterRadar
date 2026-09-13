@@ -8,6 +8,11 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.0.79] — 2026-09-13
+### Documentation
+- README documents the 90% coverage gate and that the test suite runs fully
+  offline.
+
 ## [0.0.78] — 2026-09-13
 ### Fixed
 - Nearly every geocoded market was shown as "Ungefährer Ort". Town results
