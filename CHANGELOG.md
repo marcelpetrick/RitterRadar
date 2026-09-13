@@ -8,6 +8,18 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.0.78] — 2026-09-13
+### Fixed
+- Nearly every geocoded market was shown as "Ungefährer Ort". Town results
+  from Nominatim carry no postcode and were rejected, and the postcode
+  centroids used instead never reached an importance of 0.4. Results that
+  name the requested city are now accepted and treated as certain; country,
+  state and county results stay uncertain.
+- Constrained cache entries move to `market-v3`: existing entries that name
+  the requested city are promoted without a network request, the rest are
+  looked up once again, keeping the previous coordinates if nothing better
+  is found.
+
 ## [0.0.77] — 2026-09-13
 ### Changed
 - Coverage gate raised from 50% to the 90% goal of the project vision; the

@@ -97,7 +97,7 @@ def test_market_cache_key_does_not_reuse_legacy_free_form_result():
     constrained = _cache_key("55444, Schöneberg", "DE", "55444", "Schöneberg")
 
     assert legacy == "55444, schöneberg"
-    assert constrained.startswith("market-v2|de|55444|")
+    assert constrained.startswith("market-v3|de|55444|")
     assert constrained != legacy
 
 
@@ -138,7 +138,7 @@ def test_legacy_cache_match_requires_expected_postal_code_and_country():
 
 
 async def test_market_geocode_promotes_matching_legacy_cache_entry(monkeypatch):
-    legacy = GeoResult(49.94, 7.73, "55444, Dörrebach, Deutschland", True)
+    legacy = GeoResult(49.94, 7.73, "55444, Schöneberg, Landkreis Bad Kreuznach, Deutschland", True)
     cache_entries = {"55444, schöneberg": legacy}
     writes = []
 
@@ -158,6 +158,7 @@ async def test_market_geocode_promotes_matching_legacy_cache_entry(monkeypatch):
         city="Schöneberg",
     )
 
-    assert result == legacy
-    assert writes[0][0].startswith("market-v2|de|55444|")
-    assert writes[0][1] == legacy
+    # The entry names the requested town, so it is promoted as a certain result.
+    assert result == GeoResult(49.94, 7.73, legacy.display_name, False)
+    assert writes[0][0].startswith("market-v3|de|55444|")
+    assert writes[0][1] == result

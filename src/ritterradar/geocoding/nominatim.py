@@ -9,7 +9,8 @@
 
 import asyncio
 import logging
-from dataclasses import dataclass
+import re
+from dataclasses import dataclass, replace
 from datetime import UTC, datetime
 from typing import Any, cast
 
@@ -35,6 +36,12 @@ _RATE_LIMIT_SECONDS = 1.1
 _last_request_time: float = 0.0
 _rate_limit_lock = asyncio.Lock()
 
+# Constrained cache keys are versioned. "market-v3" entries were validated with
+# the city-aware rules below; "market-v2" entries are re-checked once on access.
+_CACHE_VERSION = "market-v3"
+_PREVIOUS_CACHE_VERSION = "market-v2"
+_COARSE_TYPES = frozenset({"country", "state", "county", "region"})
+
 
 @dataclass
 class GeoResult:
@@ -57,8 +64,8 @@ async def geocode(
     """Geocode *query* using Nominatim with cache and rate limiting.
 
     Returns ``None`` when the address cannot be resolved at all.
-    Sets ``uncertain=True`` when the result confidence is low
-    (importance < 0.4 or result type is too coarse).
+    Sets ``uncertain=True`` for coarse results (country, state, county) and for
+    results that neither name the requested *city* nor reach an importance of 0.4.
     """
     cache_key = _cache_key(query, country_code, postal_code, city)
     if not cache_key:
@@ -68,12 +75,25 @@ async def geocode(
     if cached is not None:
         return cached
 
+    previous: GeoResult | None = None
     legacy_key = query.strip().lower()
     if cache_key != legacy_key:
-        legacy = _cache_get(legacy_key)
-        if legacy is not None and _legacy_result_matches(legacy, country_code, postal_code):
-            _cache_set(cache_key, legacy)
-            return legacy
+        previous = _cache_get(
+            _cache_key(query, country_code, postal_code, city, _PREVIOUS_CACHE_VERSION)
+        )
+        if previous is None:
+            legacy = _cache_get(legacy_key)
+            if legacy is not None and _legacy_result_matches(legacy, country_code, postal_code):
+                previous = legacy
+        if previous is not None:
+            if city and _city_matches(previous.display_name, city):
+                # Earlier versions flagged validated town results as uncertain.
+                promoted = replace(previous, uncertain=False)
+                _cache_set(cache_key, promoted)
+                return promoted
+            if not previous.uncertain:
+                _cache_set(cache_key, previous)
+                return previous
 
     lookup_query = _structured_query(postal_code, city) or query
     result = await _nominatim_lookup(
@@ -81,6 +101,7 @@ async def geocode(
         user_agent,
         country_code=country_code,
         postal_code=postal_code,
+        city=city,
     )
     if result is None and postal_code and city:
         # Some locality names are ambiguous even alongside a postal code.
@@ -90,7 +111,12 @@ async def geocode(
             user_agent,
             country_code=country_code,
             postal_code=postal_code,
+            city=city,
         )
+    if result is None:
+        # Keep earlier coordinates; caching them under the current key stops
+        # the refresh from repeating on every crawl.
+        result = previous
     if result is not None:
         _cache_set(cache_key, result)
     return result
@@ -101,6 +127,7 @@ def _cache_key(
     country_code: str | None,
     postal_code: str | None,
     city: str | None,
+    version: str = _CACHE_VERSION,
 ) -> str:
     normalised_query = query.strip().lower()
     if not normalised_query:
@@ -109,7 +136,7 @@ def _cache_key(
         return normalised_query
     return "|".join(
         (
-            "market-v2",
+            version,
             (country_code or "").strip().lower(),
             _normalise_postal_code(postal_code),
             (city or "").strip().lower(),
@@ -174,6 +201,7 @@ async def _nominatim_lookup(
     *,
     country_code: str | None = None,
     postal_code: str | None = None,
+    city: str | None = None,
 ) -> GeoResult | None:
     global _last_request_time
 
@@ -193,6 +221,7 @@ async def _nominatim_lookup(
                 user_agent,
                 country_code=country_code,
                 postal_code=postal_code,
+                city=city,
             ),
         )
         return result
@@ -207,6 +236,7 @@ def _blocking_lookup(
     *,
     country_code: str | None = None,
     postal_code: str | None = None,
+    city: str | None = None,
 ) -> GeoResult | None:
     from geopy.geocoders import Nominatim
 
@@ -223,25 +253,51 @@ def _blocking_lookup(
 
     importance: float = getattr(location, "importance", None) or 0.0
     raw: dict[str, Any] = getattr(location, "raw", {})
-    if not _matches_expected_location(raw, country_code, postal_code):
+    display_name = str(location.address)
+    if not _matches_expected_location(
+        raw, country_code, postal_code, city=city, display_name=display_name
+    ):
         logger.warning("Rejected mismatched Nominatim result for query %r", query)
         return None
-    result_type: str = raw.get("type", "")
 
-    # Mark uncertain if importance is low or the result is too coarse
-    coarse_types = {"country", "state", "county", "region"}
-    uncertain = importance < 0.4 or result_type in coarse_types
-
+    uncertain = _is_uncertain(
+        importance,
+        str(raw.get("type", "")),
+        str(raw.get("addresstype", "")),
+        display_name,
+        city,
+    )
     return GeoResult(
         latitude=cast(float, location.latitude),
         longitude=cast(float, location.longitude),
-        display_name=str(location.address),
+        display_name=display_name,
         uncertain=uncertain,
     )
 
 
+def _is_uncertain(
+    importance: float,
+    result_type: str,
+    address_type: str,
+    display_name: str,
+    city: str | None,
+) -> bool:
+    if result_type in _COARSE_TYPES or address_type in _COARSE_TYPES:
+        return True
+    # Small towns rarely reach a high importance; naming the requested city is
+    # the stronger signal that the marker sits in the right place.
+    if city and _city_matches(display_name, city):
+        return False
+    return importance < 0.4
+
+
 def _matches_expected_location(
-    raw: dict[str, Any], country_code: str | None, postal_code: str | None
+    raw: dict[str, Any],
+    country_code: str | None,
+    postal_code: str | None,
+    *,
+    city: str | None = None,
+    display_name: str = "",
 ) -> bool:
     address = raw.get("address")
     if not isinstance(address, dict):
@@ -254,10 +310,32 @@ def _matches_expected_location(
 
     if postal_code:
         result_postal_code = _normalise_postal_code(str(address.get("postcode", "")))
-        if not result_postal_code or result_postal_code != _normalise_postal_code(postal_code):
-            return False
+        if result_postal_code:
+            return result_postal_code == _normalise_postal_code(postal_code)
+        # Town and municipality boundaries carry no postcode; accept them only
+        # when they name the requested city.
+        return city is not None and _city_matches(display_name, city)
 
     return True
+
+
+def _city_matches(display_name: str, city: str) -> bool:
+    """True when all words of one "/"-separated spelling of *city* occur in *display_name*.
+
+    Parenthesised qualifiers such as "(Harz)" and words shorter than three
+    letters are ignored: "Elbingerode (Harz)" matches "Elbingerode, Oberharz …".
+    """
+    place_words = set(_place_words(display_name))
+    for spelling in city.split("/"):
+        words = [word for word in _place_words(spelling) if len(word) >= 3]
+        if words and all(word in place_words for word in words):
+            return True
+    return False
+
+
+def _place_words(text: str) -> list[str]:
+    without_qualifiers = re.sub(r"\([^)]*\)", " ", text.casefold())
+    return re.findall(r"[^\W_]+", without_qualifiers)
 
 
 def _normalise_postal_code(postal_code: str | None) -> str:
