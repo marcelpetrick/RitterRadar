@@ -22,6 +22,8 @@ Page structure (verified 2026-09-13):
     [3] PLZ (5-digit postal code)
     [4] City name
     [5] Details button (same URL as [2])
+  The country is only present as a commented-out cell in each row:
+    <!-- <td>Schweiz, </td> -->  → mapped to an ISO code (default DE)
 """
 
 import logging
@@ -29,7 +31,7 @@ import re
 from datetime import date, datetime
 from urllib.parse import urljoin
 
-from bs4 import BeautifulSoup, Tag
+from bs4 import BeautifulSoup, Comment, Tag
 
 from ritterradar.crawler.base_adapter import AbstractCrawlerAdapter, MarketData
 from ritterradar.crawler.http_client import PoliteHttpClient
@@ -37,8 +39,8 @@ from ritterradar.crawler.registry import register
 
 logger = logging.getLogger(__name__)
 
-__version__ = "0.2.0"
-_VERIFIED_DATE = "2026-09-13"
+__version__ = "0.3.0"
+_VERIFIED_DATE = "2026-09-14"
 
 BASE = "https://www.mittelalterkalender.info"
 _HOME = f"{BASE}/"
@@ -57,6 +59,37 @@ _TYPE_KEYWORDS: dict[str, list[str]] = {
     "renaissance": ["renaissance", "historisch", "landsknecht"],
     "fantasy": ["fantasy", "drachen", "magie", "elfen", "mytho"],
 }
+
+
+# Commented-out country cell kept in every row: <!-- <td>Schweiz, </td> -->
+_COUNTRY_COMMENT_RE = re.compile(r"<td>\s*([^<,]+?)\s*,\s*</td>")
+_COUNTRY_ISO: dict[str, str] = {
+    "Deutschland": "DE",
+    "Österreich": "AT",
+    "Schweiz": "CH",
+    "Liechtenstein": "LI",
+    "Luxemburg": "LU",
+    "Niederlande": "NL",
+    "Belgien": "BE",
+    "Frankreich": "FR",
+    "Italien": "IT",
+    "Dänemark": "DK",
+    "Schweden": "SE",
+    "Norwegen": "NO",
+    "Polen": "PL",
+    "Tschechien": "CZ",
+    "Spanien": "ES",
+    "Großbritannien": "GB",
+}
+
+
+def _parse_country(row: Tag) -> str:
+    """Return the ISO code of the row's commented-out country cell (default DE)."""
+    for comment in row.find_all(string=lambda text: isinstance(text, Comment)):
+        m = _COUNTRY_COMMENT_RE.search(str(comment))
+        if m and m.group(1) in _COUNTRY_ISO:
+            return _COUNTRY_ISO[m.group(1)]
+    return "DE"
 
 
 def _fallback_urls(year: int) -> list[str]:
@@ -126,6 +159,7 @@ def _parse_row(row: Tag) -> MarketData | None:
         end_date=end,
         city=city,
         postal_code=postal_code,
+        country=_parse_country(row),
         source_url=source_url,
         market_type=_detect_type(name),
         confidence_score=0.9,
