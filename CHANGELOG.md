@@ -8,6 +8,18 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.0.86] — 2026-09-14
+### Fixed
+- Pfalzis Marktkalendarium names spanning several lines were glued together
+  ("Mittelaltermeile<br/>Altstadtfest" became "MittelaltermeileAltstadtfest");
+  the lines are now joined with a space. Adapter version 0.2.0.
+
+## [0.0.85] — 2026-09-14
+### Fixed
+- A re-crawl whose event name differs only in whitespace from the stored one
+  (same start date and source URL) now updates that record and adopts the
+  corrected name instead of inserting a duplicate.
+
 ## [0.0.84] — 2026-09-14
 ### Fixed
 - Re-crawls now correct the country of existing events: a record still on the

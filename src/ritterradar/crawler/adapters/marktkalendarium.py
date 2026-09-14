@@ -44,8 +44,8 @@ from ritterradar.crawler.registry import register
 
 logger = logging.getLogger(__name__)
 
-__version__ = "0.1.0"
-_VERIFIED_DATE = "2026-06-25"
+__version__ = "0.2.0"
+_VERIFIED_DATE = "2026-09-14"
 
 BASE = "https://marktkalendarium.de"
 
@@ -138,7 +138,8 @@ def _parse_row(row: Tag) -> MarketData | None:
     if end is None:
         end = start  # single-day event (shouldn't occur but defensive)
 
-    name = cells[2].get_text(strip=True)
+    # Names may span lines ("Mittelaltermeile<br/>Altstadtfest"); keep a space.
+    name = " ".join(cells[2].get_text(" ", strip=True).split())
     if not name:
         return None
 

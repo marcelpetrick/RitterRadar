@@ -135,7 +135,7 @@ Adapter uses regex `(\d{1,2})\.(\d{2})\.\s*[+\-–]\s*(\d{1,2})\.(\d{2})\.(\d{4}
 
 | Property | Value |
 |---|---|
-| **Adapter** | `marktkalendarium` · `__version__ = "0.1.0"` |
+| **Adapter** | `marktkalendarium` · `__version__ = "0.2.0"` |
 | **Base URL** | https://marktkalendarium.de |
 | **List URL** | `/maerkte{YEAR}.php` |
 | **Events/year** | ~334 (2026), 8 (2027 early entries) |
@@ -169,6 +169,9 @@ Plain HTML table rows — no class selector needed, select by date content:
 - Row count fluctuates; all rows with a date in any TD are event rows.
 - Source URL extracted from first `<a href>` in TD[5] that is not a Google Maps link.
 - Some entries use `"d-"` (lowercase) prefix — normalise before lookup.
+- Event names can span lines (`Mittelaltermeile<br/>Altstadtfest`); the adapter
+  joins them with a space. Past events disappear from the yearly page, so their
+  stored records are no longer refreshed by crawls.
 
 ---
 
