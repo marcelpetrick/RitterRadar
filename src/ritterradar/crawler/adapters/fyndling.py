@@ -42,15 +42,25 @@ from ritterradar.crawler.registry import register
 
 logger = logging.getLogger(__name__)
 
-__version__ = "0.1.0"
-_VERIFIED_DATE = "2026-09-13"
+__version__ = "0.2.0"
+_VERIFIED_DATE = "2026-09-14"
 
 _URL = "https://fyndling.de/maerkte.html"
 
 _DATE_RE = re.compile(r"(\d{1,2})\.(\d{1,2})\.(\d{4})")
 # "(🇫🇷FR)" — optional regional-indicator flag followed by an ISO country code
 _COUNTRY_RE = re.compile(r"\(\s*[\U0001F1E6-\U0001F1FF]*\s*([A-Z]{2})\s*\)\s*$")
-_POSTAL_CITY_RE = re.compile(r"^(?:[A-Z]{1,2}-)?(\d{4,5})(?:\s+(.+))?$")
+_POSTAL_CITY_RE = re.compile(r"^(?:[A-Z]{1,2}[-.])?(\d{4,5})(?:\s+(.+))?$")
+_CITY_POSTAL_RE = re.compile(r"^(.+?)\s+(\d{4,5})$")  # "Drage 21423"
+# Older entries mark the country after the city: "39040 Campo di Trens (I)"
+_LEGACY_MARKER_RE = re.compile(r"\s*\((A|D|F|I|L)\)\s*$")
+_LEGACY_COUNTRY = {"A": "AT", "D": "DE", "F": "FR", "I": "IT", "L": "LU"}
+_SWISS_CANTONS = frozenset(
+    {
+        "AG", "AI", "AR", "BE", "BL", "BS", "FR", "GE", "GL", "GR", "JU", "LU", "NE",
+        "NW", "OW", "SG", "SH", "SO", "SZ", "TG", "TI", "UR", "VD", "VS", "ZG", "ZH",
+    }
+)  # fmt: skip
 _COUNTRIES = frozenset({"DE", "AT", "CH", "LI", "LU"})
 _TYPE_KEYWORDS: dict[str, list[str]] = {
     "christmas": ["weihnacht", "advent", "rauhnacht", "raunacht"],
@@ -72,16 +82,32 @@ def _parse_dates(text: str) -> tuple[date, date] | None:
     return start, max(start, end)
 
 
+def _clean_city(city: str, country: str) -> str | None:
+    words = city.split()
+    # Swiss places often carry their canton: "Zofingen AG", "Laupen BE"
+    if country == "CH" and len(words) > 1 and words[-1] in _SWISS_CANTONS:
+        words = words[:-1]
+    return " ".join(words) or None
+
+
 def _parse_location(text: str) -> tuple[str | None, str | None, str]:
     """Return (postal_code, city, country) for a location cell."""
     m = _COUNTRY_RE.search(text)
     country = m.group(1) if m else "DE"
     body = _COUNTRY_RE.sub("", text).strip()
+    legacy = _LEGACY_MARKER_RE.search(body)
+    if legacy:
+        if m is None:
+            country = _LEGACY_COUNTRY[legacy.group(1)]
+        body = body[: legacy.start()].strip()
+
     pm = _POSTAL_CITY_RE.match(body)
     if pm:
-        city = (pm.group(2) or "").strip()
-        return pm.group(1), city or None, country
-    return None, body or None, country
+        return pm.group(1), _clean_city(pm.group(2) or "", country), country
+    cm = _CITY_POSTAL_RE.match(body)
+    if cm:
+        return cm.group(2), _clean_city(cm.group(1), country), country
+    return None, _clean_city(body, country), country
 
 
 def _detect_type(name: str) -> str:
