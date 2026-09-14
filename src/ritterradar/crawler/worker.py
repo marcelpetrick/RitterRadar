@@ -13,7 +13,7 @@ import logging
 from datetime import UTC, datetime
 
 from sqlalchemy.exc import IntegrityError
-from sqlmodel import Session, select
+from sqlmodel import Session, func, select
 
 from ritterradar.config import get_settings
 from ritterradar.crawler.base_adapter import MarketData
@@ -246,6 +246,9 @@ def _upsert_market(
             # Enrich existing record with any data the new source adds.
             existing.end_date = mdata.end_date
             existing.updated_at = now
+            # Adopt a corrected spelling that differs only in whitespace.
+            if existing.name != mdata.name and _compact(existing.name) == _compact(mdata.name):
+                existing.name = mdata.name
             # Fill in missing location fields
             if existing.city is None and mdata.city:
                 existing.city = mdata.city
@@ -318,4 +321,19 @@ def _find_existing_market(session: Session, mdata: MarketData) -> Market | None:
             )
         ).first()
 
+    # Phase 3 — same-source re-crawl where only the name's whitespace changed,
+    # e.g. after an adapter stopped gluing "Mittelaltermeile<br/>Altstadtfest".
+    if existing is None:
+        existing = session.exec(
+            select(Market).where(
+                func.replace(Market.name, " ", "") == _compact(mdata.name),
+                Market.start_date == mdata.start_date,
+                Market.source_url == mdata.source_url,
+            )
+        ).first()
+
     return existing
+
+
+def _compact(name: str) -> str:
+    return name.replace(" ", "")
