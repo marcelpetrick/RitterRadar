@@ -8,6 +8,13 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.0.84] — 2026-09-14
+### Fixed
+- Re-crawls now correct the country of existing events: a record still on the
+  default `DE` takes the country a source reports (e.g. the Swiss and Austrian
+  events from mittelalterkalender.info), while a known country is never
+  overwritten by a source's default.
+
 ## [0.0.83] — 2026-09-14
 ### Documentation
 - Sources documentation describes the country comments on

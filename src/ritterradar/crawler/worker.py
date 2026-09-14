@@ -253,6 +253,10 @@ def _upsert_market(
                 existing.postal_code = mdata.postal_code
             if existing.address is None and mdata.address:
                 existing.address = mdata.address
+            # "DE" is the MarketData default, so a source reporting another
+            # country corrects it; a known country is never reset to the default.
+            if existing.country == "DE" and mdata.country != "DE":
+                existing.country = mdata.country
             # A validated recrawl may repair an older low-confidence result.
             if lat is not None and (existing.latitude is None or existing.geocode_uncertain):
                 existing.latitude = lat

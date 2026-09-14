@@ -228,3 +228,28 @@ def test_upsert_enriches_existing_market_from_another_source(session: Session):
     assert market.program_text == "Musik und Gaukler"
     assert market.original_text == "a much longer original text"
     assert (market.latitude, market.longitude) == (54.32, 10.13)
+
+
+def test_upsert_corrects_default_country_but_never_overrides_a_known_one(session: Session):
+    base = {
+        "name": "Worker country market",
+        "start_date": date(2031, 8, 1),
+        "end_date": date(2031, 8, 2),
+        "postal_code": "9630",
+        "city": "Wattwil",
+    }
+    _upsert_market(
+        MarketData(**base, source_url="https://example.com/country-a"), None, None, True, "A"
+    )
+    swiss = MarketData(**base, country="CH", source_url="https://example.com/country-a")
+    assert _upsert_market(swiss, 47.3, 9.08, False, "A") == (0, 1)
+
+    market = session.exec(select(Market).where(Market.name == "Worker country market")).one()
+    session.refresh(market)
+    assert market.country == "CH"
+
+    # A later source that falls back to the default must not undo the correction.
+    default = MarketData(**base, source_url="https://example.com/country-b")
+    _upsert_market(default, 47.3, 9.08, False, "B")
+    session.refresh(market)
+    assert market.country == "CH"
