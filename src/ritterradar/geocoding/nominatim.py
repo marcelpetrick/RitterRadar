@@ -36,11 +36,14 @@ _RATE_LIMIT_SECONDS = 1.1
 _last_request_time: float = 0.0
 _rate_limit_lock = asyncio.Lock()
 
-# Constrained cache keys are versioned. "market-v3" entries were validated with
-# the city-aware rules below; "market-v2" entries are re-checked once on access.
-_CACHE_VERSION = "market-v3"
-_PREVIOUS_CACHE_VERSION = "market-v2"
+# Constrained cache keys are versioned. "market-v4" entries were resolved with
+# the city-aware rules and compound-name lookups below; "market-v3" entries are
+# re-checked once on access.
+_CACHE_VERSION = "market-v4"
+_PREVIOUS_CACHE_VERSION = "market-v3"
 _COARSE_TYPES = frozenset({"country", "state", "county", "region"})
+# "Mechernich-Satzvey", "Schwendi - Orsenhausen", "Bornhagen OT Rimbach", "Spelle / Venhaus"
+_CITY_SEPARATOR_RE = re.compile(r"\s*/\s*|\s+-\s+|\s+OT\s+|-")
 
 
 @dataclass
@@ -103,6 +106,20 @@ async def geocode(
         postal_code=postal_code,
         city=city,
     )
+    if (result is None or result.uncertain) and city:
+        # Compound names are rarely known to Nominatim as a whole; try the
+        # district first, then the municipality.
+        for part in _city_parts(city):
+            candidate = await _nominatim_lookup(
+                _structured_query(postal_code, part),
+                user_agent,
+                country_code=country_code,
+                postal_code=postal_code,
+                city=part,
+            )
+            if candidate is not None and not candidate.uncertain:
+                result = candidate
+                break
     if result is None and postal_code and city:
         # Some locality names are ambiguous even alongside a postal code.
         # A validated postal centroid is safer than accepting the wrong city.
@@ -143,6 +160,17 @@ def _cache_key(
             normalised_query,
         )
     )
+
+
+def _city_parts(city: str) -> list[str]:
+    """Split a compound place name into its parts, most specific (last) first.
+
+    Returns an empty list for simple names, so callers only issue extra
+    lookups for names like "Schwendi - Orsenhausen" or "Bornhagen OT Rimbach".
+    """
+    parts = [part.strip() for part in _CITY_SEPARATOR_RE.split(city)]
+    parts = [part for part in parts if len(part) >= 3]
+    return list(reversed(parts)) if len(parts) >= 2 else []
 
 
 def _structured_query(postal_code: str | None, city: str | None) -> dict[str, str]:

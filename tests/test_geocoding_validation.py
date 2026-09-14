@@ -134,7 +134,7 @@ async def test_previous_entry_naming_the_city_is_promoted_without_lookup(monkeyp
         "86732, Oettingen", UA, country_code="DE", postal_code="86732", city="Oettingen"
     )
     assert result == replace(previous, uncertain=False)
-    assert writes[0][0].startswith("market-v3|de|86732|")
+    assert writes[0][0].startswith("market-v4|de|86732|")
 
 
 async def test_certain_previous_entry_is_reused_as_is(monkeypatch):
