@@ -8,6 +8,30 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.0.83] — 2026-09-14
+### Documentation
+- Sources documentation describes the country comments on
+  mittelalterkalender.info and the fyndling.de location cleanup.
+
+## [0.0.82] — 2026-09-14
+### Fixed
+- Compound place names such as "Mechernich-Satzvey", "Schwendi - Orsenhausen"
+  or "Bornhagen OT Rimbach" are geocoded via their parts (district first) when
+  the full name gives no certain result. Cache keys move to `market-v4` so the
+  affected entries are looked up once again.
+
+## [0.0.81] — 2026-09-14
+### Fixed
+- Fyndling.de locations: Swiss canton suffixes ("Zofingen AG") are removed,
+  legacy country markers ("Campo di Trens (I)") set the country, and
+  "D.87700 Memmingen" / "Drage 21423" postcodes are recognised.
+
+## [0.0.80] — 2026-09-14
+### Fixed
+- Mittelalterkalender.info stored every event as German, so ~100 Austrian,
+  Swiss, Dutch and other events were geocoded within Germany and failed. The
+  country is now read from the commented-out country cell of each row.
+
 ## [0.0.79] — 2026-09-13
 ### Documentation
 - README documents the 90% coverage gate and that the test suite runs fully

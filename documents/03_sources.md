@@ -31,7 +31,7 @@ The four disabled sources are still unavailable (see below).
 
 | Property | Value |
 |---|---|
-| **Adapter** | `mittelalterkalender_info` · `__version__ = "0.2.0"` |
+| **Adapter** | `mittelalterkalender_info` · `__version__ = "0.3.0"` |
 | **Base URL** | https://www.mittelalterkalender.info |
 | **List URL** | discovered from homepage links matching `/mittelaltermarkt/*-{YEAR}-nach-datum.php` |
 | **Events/year** | ~900 (2026) |
@@ -56,6 +56,10 @@ Each event is a `<tr class="isbfilter">` row in a Semantic UI table:
   2027 is `historische-feste-mittelaltermaerkte-und-fantasy-festivals-2027-nach-datum.php`
   (the old-style 2027 URL answers `302`). The adapter reads the homepage links and
   only falls back to both known name patterns.
+- The country is not visible in the table; each row keeps it in a commented-out
+  cell (`<!-- <td>Schweiz, </td> -->`). About 10% of rows are outside Germany
+  (AT, CH, NL, LU, FR, BE, DK, IT, SE, PL, GB); the adapter maps the name to an
+  ISO code and defaults to DE.
 - Detail pages use POST via `<button formaction>` — not directly accessible via GET.
 
 ---
@@ -339,7 +343,7 @@ Wien and Salzburg are kept (both province and city).
 
 | Property | Value |
 |---|---|
-| **Adapter** | `fyndling` · `__version__ = "0.1.0"` |
+| **Adapter** | `fyndling` · `__version__ = "0.2.0"` |
 | **Base URL** | https://fyndling.de |
 | **List URL** | `/maerkte.html` (single page, current year only) |
 | **Events/year** | ~2,700 across Europe; ~1,320 kept (DE, AT, CH, LI, LU) |
@@ -361,6 +365,10 @@ Wien and Salzburg are kept (both province and city).
 - German rows have no country suffix; all others end with `(<flag>XX)`.
 - ~90 DACH rows give only a city or only a postal code; 12 Austrian rows have no
   location and are skipped.
+- Free-text locations need cleanup: Swiss canton suffixes (`Zofingen AG`) are
+  removed, legacy markers like `Campo di Trens (I)` set the country, and
+  `D.87700 Memmingen` or `Drage 21423` postcodes are recognised. A few entries
+  (`Sonstiges`, `0xxxx`) cannot be geocoded at all.
 - `?year=2027` returns the same 2026 page — no next-year data yet.
 - Non-DACH rows are dropped to avoid ~1,400 Nominatim lookups for events far
   outside the map's focus.
