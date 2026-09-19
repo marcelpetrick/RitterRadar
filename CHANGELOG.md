@@ -8,6 +8,14 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.0.87] — 2026-09-19
+### Changed
+- Updated Uvicorn from 0.52.4 to 0.53.0, SQLAlchemy from 2.0.52 to 2.0.54,
+  and Ruff from 0.16.7 to 0.16.8, retaining exact version pins.
+- Updated Docker workflow actions: setup-qemu-action from v4.3.0 to v4.4.0,
+  setup-buildx-action from v4.3.0 to v4.4.1, and build-push-action from v7.3.0
+  to v7.4.0, retaining full commit SHA pins.
+
 ## [0.0.86] — 2026-09-14
 ### Fixed
 - Pfalzis Marktkalendarium names spanning several lines were glued together
