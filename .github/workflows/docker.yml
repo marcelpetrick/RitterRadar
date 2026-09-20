@@ -5,15 +5,14 @@ name: Docker
 #
 #   pull request   -> build + smoke test only, nothing is pushed
 #   push to master -> :edge, :sha-<short>
-#   tag vX.Y.Z     -> :X.Y.Z, :X.Y, :latest, :sha-<short>
+#   release call  -> :X.Y.Z, :X.Y, :latest, :sha-<short> after quality checks
 
 on:
   push:
     branches: [master]
-    tags: ["v*.*.*"]
   pull_request:
     branches: [master]
-  workflow_dispatch:
+  workflow_call:
 
 concurrency:
   group: docker-${{ github.ref }}
@@ -52,6 +51,8 @@ jobs:
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=sha
+          labels: |
+            org.opencontainers.image.licenses=GPL-3.0-or-later
 
       - name: Build image for smoke test (amd64)
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
@@ -65,12 +66,13 @@ jobs:
 
       - name: Smoke test
         run: |
-          docker run -d --name smoke -p 127.0.0.1:8000:8000 ritterradar:smoke-test
+          docker run -d --name smoke -e RITTERRADAR_WORKERS=0 -p 127.0.0.1:8000:8000 ritterradar:smoke-test
           trap 'docker logs smoke; docker rm -f smoke' EXIT
           curl -fsS --retry 30 --retry-delay 2 --retry-all-errors http://127.0.0.1:8000/health
           curl -fsS -o index.html http://127.0.0.1:8000/
           grep -q "RitterRadar" index.html
           curl -fsS -o /dev/null http://127.0.0.1:8000/static/css/ritterradar.css
+          curl -fsS -o /dev/null http://127.0.0.1:8000/static/js/market-dedup.js
           curl -fsS -o /dev/null http://127.0.0.1:8000/api/crawl/status
 
       - name: Log in to GitHub Container Registry

@@ -8,6 +8,21 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.0.90] — 2026-09-20
+### Changed
+- Refresh the README with release, license, technology, coverage-gate and
+  container-platform badges, quick links and clearer Docker instructions.
+- Release tags now validate the project version and changelog, run the full
+  quality and browser gates, publish the container, and attach checked Python
+  packages before making the GitHub release public.
+- Correct the release badge's tag-run visibility and the container's GPL license
+  metadata. Container smoke tests run without background crawler workers.
+
+### Included since the previous public release (0.0.87)
+- All September crawler, date-filter, event-scope, geocoding and deduplication
+  corrections from 0.0.88, plus the preview layout fix from 0.0.89.
+- Regression fixtures, browser coverage in CI, and the read-only month audit.
+
 ## [0.0.89] — 2026-09-20
 ### Fixed
 - Wrap long event date ranges within the preview column and clip preview

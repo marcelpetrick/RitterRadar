@@ -1,8 +1,21 @@
 # ⚔ RitterRadar
 
 [![CI](https://github.com/marcelpetrick/RitterRadar/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/marcelpetrick/RitterRadar/actions/workflows/ci.yml)
-[![Release](https://github.com/marcelpetrick/RitterRadar/actions/workflows/release.yml/badge.svg?branch=master)](https://github.com/marcelpetrick/RitterRadar/actions/workflows/release.yml)
+[![Release](https://github.com/marcelpetrick/RitterRadar/actions/workflows/release.yml/badge.svg)](https://github.com/marcelpetrick/RitterRadar/actions/workflows/release.yml)
 [![Docker](https://github.com/marcelpetrick/RitterRadar/actions/workflows/docker.yml/badge.svg?branch=master)](https://github.com/marcelpetrick/RitterRadar/pkgs/container/ritterradar)
+[![Latest release](https://img.shields.io/github/v/release/marcelpetrick/RitterRadar?sort=semver&color=b8860b)](https://github.com/marcelpetrick/RitterRadar/releases/latest)
+[![License: GPL v3 or later](https://img.shields.io/badge/license-GPLv3%20or%20later-blue.svg)](LICENSE)
+
+[![Python 3.12–3.14](https://img.shields.io/badge/Python-3.12%E2%80%933.14-3776ab?logo=python&logoColor=white)](pyproject.toml)
+[![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)](pyproject.toml)
+[![SQLite](https://img.shields.io/badge/SQLite-003b57?logo=sqlite&logoColor=white)](src/ritterradar/database)
+[![Leaflet](https://img.shields.io/badge/Leaflet-199900?logo=leaflet&logoColor=white)](src/ritterradar/static)
+[![Coverage gate: 90%](https://img.shields.io/badge/coverage%20gate-%E2%89%A590%25-brightgreen)](pyproject.toml)
+[![Containers: amd64 and arm64](https://img.shields.io/badge/GHCR-amd64%20%7C%20arm64-2496ed?logo=docker&logoColor=white)](https://github.com/marcelpetrick/RitterRadar/pkgs/container/ritterradar)
+
+**Discover medieval, Renaissance, Viking, fantasy and themed Christmas events on your own map.**
+
+[Get started](#installation) · [Run with Docker](#docker) · [Download a release](https://github.com/marcelpetrick/RitterRadar/releases/latest) · [Changelog](CHANGELOG.md)
 
 > *Hearken, good traveller, and lend thine ear!*
 >
@@ -12,7 +25,7 @@
 >
 > *Upon thine own machine it doth render a most beautiful interactive map, whereupon thou mayest **filter by period** (which months thou wishest to survey) and **filter by space** (thy home position and a radius of thy choosing, from a stone's throw to 1024 leagues). Click upon any marker to learn the full particulars. The crawler runneth in the background; the map refresheth on its own accord.*
 >
-> *No cloud. No accounts. No data leaveth thy machine. Thus: a helper tool that crawleth the web with custom crawlers, presenteth the findings, and alloweth thee to sift them by time and by distance. Nothing more, nothing less - but fashioned with care.*
+> *No account is required. Thy settings and event treasury remain local; external services provide event pages, geocoding and map tiles. Thus: a helper tool that crawleth the web with custom crawlers, presenteth the findings, and alloweth thee to sift them by time and by distance.*
 
 ---
 
@@ -24,8 +37,8 @@
 
 > *"Free as in freedom — and as in the freedom to roam medieval markets."*
 
-### current state web UI
-![](media/currentStateWebUi.png)
+### The map in action
+![RitterRadar map with event filters, upcoming markets and crawler status](media/currentStateWebUi.png)
 
 ---
 
@@ -100,7 +113,8 @@ Container Registry as
 | Tag | Content |
 |---|---|
 | `latest` | Most recent release |
-| `X.Y.Z`, `X.Y` | A specific release (e.g. `0.0.67`, `0.0`) |
+| `X.Y.Z` | A specific release (e.g. `0.0.90`) |
+| `X.Y` | Latest release in that minor series (e.g. `0.0`) |
 | `edge` | Latest build of `master` |
 | `sha-<commit>` | Build of one exact commit |
 
@@ -154,24 +168,29 @@ docker run --rm -p 127.0.0.1:8000:8000 \
 
 ### Publishing pipeline
 
-`.github/workflows/docker.yml` builds the image, starts it and smoke-tests
-`/health`, `/`, static files and the crawl API before pushing:
+The workflows share the same Python 3.12–3.14 quality checks and browser tests.
+For releases, a tag must match the version in `pyproject.toml` and have a
+changelog entry before those checks run. Docker builds and smoke-tests `/health`,
+`/`, static files and the crawl API before publishing both architectures:
 
 | Trigger | Result |
 |---|---|
 | Pull request | Build + smoke test only, nothing pushed |
 | Push to `master` | `:edge`, `:sha-<commit>` |
-| Tag `vX.Y.Z` | `:X.Y.Z`, `:X.Y`, `:latest`, `:sha-<commit>` |
+| Tag `vX.Y.Z` | Quality checks → Docker publication → wheel/sdist build → public GitHub release |
 
-To cut a release: bump `version` in `pyproject.toml`, commit, then
+To cut a release, bump `version` in `pyproject.toml`, add its changelog entry,
+commit and push `master`, then push the matching tag:
 
 ```bash
-git tag -a v0.0.67 -m "RitterRadar 0.0.67" && git push origin v0.0.67
-gh release create v0.0.67 --verify-tag --generate-notes
+git tag -a v0.0.90 -m "RitterRadar 0.0.90"
+git push origin v0.0.90
 ```
 
-The tag publishes the image; the GitHub release triggers `release.yml`, which
-attaches the wheel and sdist to the release.
+`release.yml` publishes the GitHub release only after the checks, container
+publication and package metadata validation succeed. The wheel and sdist are
+attached before the release becomes public. Container tags are `:X.Y.Z`, `:X.Y`,
+`:latest` and `:sha-<commit>`; `:edge` continues to follow `master`.
 
 ---
 
