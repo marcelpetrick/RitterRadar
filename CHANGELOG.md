@@ -8,6 +8,20 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.0.91] — 2026-09-20
+### Added
+- `scripts/local_pipeline.sh` runs the complete quality gate — lint, formatting,
+  strict typing, the offline test suite, the browser regression run and the
+  documentation build — and closes with a PASS/FAIL/SKIP summary. `just ci` now
+  calls it, so there is one local gate definition.
+- README project-status and versioning sections, a documentation map, and badge
+  rows for the pipelines, the pinned stack versions and the quality gate
+  (ruff, mypy strict, coverage gate, adapter count, release date, last commit).
+
+### Changed
+- Document the quality gate and its requirements in one place instead of listing
+  the single commands only.
+
 ## [0.0.90] — 2026-09-20
 ### Changed
 - Refresh the README with release, license, technology, coverage-gate and

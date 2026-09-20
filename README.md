@@ -1,17 +1,27 @@
 # ⚔ RitterRadar
 
+<!-- pipelines, release and license -->
 [![CI](https://github.com/marcelpetrick/RitterRadar/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/marcelpetrick/RitterRadar/actions/workflows/ci.yml)
-[![Release](https://github.com/marcelpetrick/RitterRadar/actions/workflows/release.yml/badge.svg)](https://github.com/marcelpetrick/RitterRadar/actions/workflows/release.yml)
 [![Docker](https://github.com/marcelpetrick/RitterRadar/actions/workflows/docker.yml/badge.svg?branch=master)](https://github.com/marcelpetrick/RitterRadar/pkgs/container/ritterradar)
-[![Latest release](https://img.shields.io/github/v/release/marcelpetrick/RitterRadar?sort=semver&color=b8860b)](https://github.com/marcelpetrick/RitterRadar/releases/latest)
+[![Release](https://github.com/marcelpetrick/RitterRadar/actions/workflows/release.yml/badge.svg)](https://github.com/marcelpetrick/RitterRadar/actions/workflows/release.yml)
+[![Latest release](https://img.shields.io/github/v/release/marcelpetrick/RitterRadar?sort=semver&color=b8860b&label=release)](https://github.com/marcelpetrick/RitterRadar/releases/latest)
+[![Release date](https://img.shields.io/github/release-date/marcelpetrick/RitterRadar?color=8b1a1a&label=released)](https://github.com/marcelpetrick/RitterRadar/releases/latest)
 [![License: GPL v3 or later](https://img.shields.io/badge/license-GPLv3%20or%20later-blue.svg)](LICENSE)
 
+<!-- stack, pinned to the versions this release ships -->
 [![Python 3.12–3.14](https://img.shields.io/badge/Python-3.12%E2%80%933.14-3776ab?logo=python&logoColor=white)](pyproject.toml)
-[![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)](pyproject.toml)
+[![FastAPI 0.141.1](https://img.shields.io/badge/FastAPI-0.141.1-009688?logo=fastapi&logoColor=white)](pyproject.toml)
+[![SQLModel 0.0.42](https://img.shields.io/badge/SQLModel-0.0.42-7e56c2)](pyproject.toml)
 [![SQLite](https://img.shields.io/badge/SQLite-003b57?logo=sqlite&logoColor=white)](src/ritterradar/database)
-[![Leaflet](https://img.shields.io/badge/Leaflet-199900?logo=leaflet&logoColor=white)](src/ritterradar/static)
-[![Coverage gate: 90%](https://img.shields.io/badge/coverage%20gate-%E2%89%A590%25-brightgreen)](pyproject.toml)
+[![Leaflet 1.9.4](https://img.shields.io/badge/Leaflet-1.9.4-199900?logo=leaflet&logoColor=white)](src/ritterradar/static/vendor)
 [![Containers: amd64 and arm64](https://img.shields.io/badge/GHCR-amd64%20%7C%20arm64-2496ed?logo=docker&logoColor=white)](https://github.com/marcelpetrick/RitterRadar/pkgs/container/ritterradar)
+
+<!-- quality gate and project health -->
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://docs.astral.sh/ruff/)
+[![mypy: strict](https://img.shields.io/badge/mypy-strict-2a6db2?logo=python&logoColor=white)](pyproject.toml)
+[![Coverage gate: 90%](https://img.shields.io/badge/coverage%20gate-%E2%89%A590%25-brightgreen)](pyproject.toml)
+[![Adapters: 9 live sources](https://img.shields.io/badge/adapters-9%20live%20sources-556b2f)](config/sources.yaml)
+[![Last commit](https://img.shields.io/github/last-commit/marcelpetrick/RitterRadar/master?color=6b4f1d)](https://github.com/marcelpetrick/RitterRadar/commits/master)
 
 **Discover medieval, Renaissance, Viking, fantasy and themed Christmas events on your own map.**
 
@@ -39,6 +49,32 @@
 
 ### The map in action
 ![RitterRadar map with event filters, upcoming markets and crawler status](media/currentStateWebUi.png)
+
+---
+
+## Project status
+
+Current version: `0.0.91` — fully functional and actively maintained.
+
+| Area | State |
+|---|---|
+| **Crawling** | 9 live adapters (HTML, WordPress REST, iCal), polite client with backoff and per-adapter failure isolation |
+| **Data** | SQLite via SQLModel, Alembic migrations, three-phase deduplication, cached Nominatim geocoding |
+| **Interface** | Leaflet map, month/radius/type filters, upcoming-events preview, detail panel, live crawler log |
+| **Quality** | ruff, mypy strict, offline pytest suite with a 90 % coverage gate, offline Playwright regression run |
+| **Delivery** | Multi-arch container on GHCR with SBOM and provenance, GitHub release with wheel and sdist |
+| **Development** | Continues through fixes, source maintenance and scoped extensions — no core feature is missing |
+
+### Versioning
+
+The version is `MAJOR.MINOR.PATCH` and `version` in
+[`pyproject.toml`](pyproject.toml) is its single source of truth;
+`src/ritterradar/__init__.py` reads it back through `importlib.metadata`, and the
+web UI shows it in the header. Every commit raises the `PATCH` number unless a
+change deliberately calls for a `MINOR` or `MAJOR` bump. A public release exists
+only where a `vX.Y.Z` tag matches that version and
+[`CHANGELOG.md`](CHANGELOG.md) documents it — see
+[Publishing pipeline](#publishing-pipeline).
 
 ---
 
@@ -113,7 +149,7 @@ Container Registry as
 | Tag | Content |
 |---|---|
 | `latest` | Most recent release |
-| `X.Y.Z` | A specific release (e.g. `0.0.90`) |
+| `X.Y.Z` | A specific release (e.g. `0.0.91`) |
 | `X.Y` | Latest release in that minor series (e.g. `0.0`) |
 | `edge` | Latest build of `master` |
 | `sha-<commit>` | Build of one exact commit |
@@ -183,8 +219,8 @@ To cut a release, bump `version` in `pyproject.toml`, add its changelog entry,
 commit and push `master`, then push the matching tag:
 
 ```bash
-git tag -a v0.0.90 -m "RitterRadar 0.0.90"
-git push origin v0.0.90
+git tag -a v0.0.91 -m "RitterRadar 0.0.91"
+git push origin v0.0.91
 ```
 
 `release.yml` publishes the GitHub release only after the checks, container
@@ -455,13 +491,36 @@ ruff format src tests        # format
 mypy src                     # type check
 ```
 
-### All in one (CI)
+### Quality gate (all in one)
 
 ```bash
-# with just:
-just ci
+bash scripts/local_pipeline.sh          # or: just ci
+bash scripts/local_pipeline.sh --no-browser --no-docs   # lint, types and tests only
+```
 
-# without just:
+`local_pipeline.sh` activates `.venv/` when present, runs every stage even after a
+failure, and closes with a summary table:
+
+```text
+========== Local Pipeline Summary ==========
+Lint                : PASS
+Format              : PASS
+Types               : PASS
+Tests               : PASS
+Browser tests       : PASS
+Documentation       : PASS
+===========================================
+```
+
+The gate requires zero ruff findings, unchanged ruff formatting, a clean strict
+`mypy` run over `src`, the offline pytest suite at ≥ 90 % coverage, and the
+offline browser regression run; the Sphinx build follows. Stages whose optional
+tools are missing are reported as `SKIP` instead of silently passing. CI runs the
+same checks on Python 3.12, 3.13 and 3.14, with the browser stage on 3.14.
+
+Single steps, without `just`:
+
+```bash
 ruff check src tests scripts/browser_test.py scripts/audit_month.py
 ruff format --check src tests scripts/browser_test.py scripts/audit_month.py
 mypy src && pytest && python scripts/browser_test.py
@@ -473,6 +532,22 @@ mypy src && pytest && python scripts/browser_test.py
 sphinx-build docs/source docs/_build/html
 open docs/_build/html/index.html
 ```
+
+---
+
+## Documentation
+
+| Document | Content |
+|---|---|
+| [`CHANGELOG.md`](CHANGELOG.md) | Released versions and what each one changed |
+| [`docs/architecture.md`](docs/architecture.md) | C4 container and component diagrams |
+| [`docs/september-2026-audit.md`](docs/september-2026-audit.md) | Read-only audit of one month of live crawl results |
+| [`documents/00_VISION.md`](documents/00_VISION.md) | Project vision and non-negotiable constraints |
+| [`documents/01_plan.md`](documents/01_plan.md) | Phase plan from skeleton to quality loop |
+| [`documents/02_issues.md`](documents/02_issues.md) | Known issues and their resolution state |
+| [`documents/03_sources.md`](documents/03_sources.md) | Per-source structure, disabled sources, rejected candidates |
+| [`documents/04_ideas.md`](documents/04_ideas.md) | Ideas not scheduled yet |
+| `docs/source/` | Sphinx API documentation (`sphinx-build docs/source docs/_build/html`) |
 
 ---
 

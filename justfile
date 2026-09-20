@@ -58,9 +58,9 @@ reset-db:
 crawl:
     bash scripts/trigger_crawl.sh
 
-# Run full CI pipeline: lint + types + tests
+# Run the full local quality gate (lint + format + types + tests + browser + docs)
 ci:
-    just lint && ruff format --check src tests scripts/browser_test.py scripts/audit_month.py && just types && just test && just test-browser
+    bash scripts/local_pipeline.sh
 
 # Build the container image from this checkout
 docker-build:
