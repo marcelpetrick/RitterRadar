@@ -63,8 +63,8 @@ from ritterradar.crawler.registry import register
 
 logger = logging.getLogger(__name__)
 
-__version__ = "0.1.0"
-_VERIFIED_DATE = "2026-06-25"
+__version__ = "0.2.0"
+_VERIFIED_DATE = "2026-09-20"
 
 BASE = "https://mittelaltermarkt.online"
 _API_URL = f"{BASE}/wp-json/tribe/events/v1/events"
@@ -103,6 +103,15 @@ _COUNTRY_ISO: dict[str, str] = {
     "Switzerland": "CH",
     "Luxemburg": "LU",
     "Luxembourg": "LU",
+    "Frankreich": "FR",
+    "France": "FR",
+    "Niederlande": "NL",
+    "Netherlands": "NL",
+    "Belgien": "BE",
+    "Belgium": "BE",
+    "Italien": "IT",
+    "Italy": "IT",
+    "Liechtenstein": "LI",
 }
 
 
@@ -155,7 +164,9 @@ def _parse_event(ev: JsonObject) -> MarketData | None:
     city = venue.get("city") or None
     postal_code = venue.get("zip") or None
     country_raw = venue.get("country", "Deutschland")
-    country = _COUNTRY_ISO.get(country_raw, "DE")
+    country = _COUNTRY_ISO.get(str(country_raw).strip(), "DE")
+    if isinstance(country_raw, str) and len(country_raw.strip()) == 2:
+        country = country_raw.strip().upper()
     geo_lat: float | None = venue.get("geo_lat") or None
     geo_lng: float | None = venue.get("geo_lng") or None
 

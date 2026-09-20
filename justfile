@@ -4,7 +4,7 @@
 
 # Install all dependencies (runtime + dev) into the current environment
 install:
-    pip install -e ".[dev]"
+    pip install -e ".[dev,browser]"
 
 # Start development server with auto-reload
 dev:
@@ -22,9 +22,13 @@ test:
 test-fast:
     pytest --no-cov -x
 
+# Offline browser regression tests (pip install -e '.[browser]'; playwright install chromium)
+test-browser:
+    python scripts/browser_test.py
+
 # Lint with ruff
 lint:
-    ruff check src tests
+    ruff check src tests scripts/browser_test.py scripts/audit_month.py
 
 # Format with ruff
 fmt:
@@ -56,7 +60,7 @@ crawl:
 
 # Run full CI pipeline: lint + types + tests
 ci:
-    just lint && just types && just test
+    just lint && ruff format --check src tests scripts/browser_test.py scripts/audit_month.py && just types && just test && just test-browser
 
 # Build the container image from this checkout
 docker-build:

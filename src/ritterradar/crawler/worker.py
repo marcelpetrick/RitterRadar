@@ -20,7 +20,9 @@ from ritterradar.crawler.base_adapter import MarketData
 from ritterradar.crawler.http_client import PoliteHttpClient, make_client
 from ritterradar.crawler.registry import get_adapter
 from ritterradar.database.engine import get_engine
-from ritterradar.geocoding.nominatim import geocode
+from ritterradar.event_scope import exclusion_reason
+from ritterradar.geocoding.nominatim import GeoResult, geocode
+from ritterradar.market_identity import has_stable_event_url
 from ritterradar.models.crawl_job import CrawlJob
 from ritterradar.models.market import Market
 from ritterradar.models.source import Source
@@ -107,8 +109,13 @@ class CrawlWorker:
 
         inserted = updated = 0
         user_agent = f"RitterRadar/0.0 ({settings.geocoder_email})"
+        # Several events can share one bad source address. Retry on the next
+        # crawl, rather than repeating the same failed lookups for every row.
+        locations: dict[tuple[str, str | None, str | None, str], GeoResult | None] = {}
 
         for mdata in markets:
+            if mdata.end_date < mdata.start_date or exclusion_reason(mdata.name, source_name):
+                continue
             lat, lon, uncertain = None, None, False
             if mdata.latitude is not None and mdata.longitude is not None:
                 # Adapter already resolved coordinates (e.g. from a JSON API)
@@ -119,13 +126,16 @@ class CrawlWorker:
             else:
                 geo_query = _build_geo_query(mdata)
                 if geo_query:
-                    result = await geocode(
-                        geo_query,
-                        user_agent,
-                        country_code=mdata.country,
-                        postal_code=mdata.postal_code,
-                        city=mdata.city,
-                    )
+                    key = (mdata.country, mdata.postal_code, mdata.city, geo_query)
+                    if key not in locations:
+                        locations[key] = await geocode(
+                            geo_query,
+                            user_agent,
+                            country_code=mdata.country,
+                            postal_code=mdata.postal_code,
+                            city=mdata.city,
+                        )
+                    result = locations[key]
                     if result:
                         lat, lon, uncertain = result.latitude, result.longitude, result.uncertain
 
@@ -211,7 +221,7 @@ def _upsert_market(
     source_name: str,
 ) -> tuple[int, int]:
     with Session(get_engine()) as session:
-        existing = _find_existing_market(session, mdata)
+        existing = _find_existing_market(session, mdata, source_name)
 
         now = datetime.now(UTC)
         if existing is None:
@@ -244,24 +254,34 @@ def _upsert_market(
                 return 0, 0
         else:
             # Enrich existing record with any data the new source adds.
+            same_source = existing.source_name == source_name and (
+                existing.source_url == mdata.source_url
+            )
+            location_changed = same_source and _location_changed(existing, mdata)
+            if same_source and has_stable_event_url(source_name, mdata.source_url):
+                existing.start_date = mdata.start_date
             existing.end_date = mdata.end_date
             existing.updated_at = now
             # Adopt a corrected spelling that differs only in whitespace.
             if existing.name != mdata.name and _compact(existing.name) == _compact(mdata.name):
                 existing.name = mdata.name
             # Fill in missing location fields
-            if existing.city is None and mdata.city:
+            if (existing.city is None or same_source) and mdata.city:
                 existing.city = mdata.city
-            if existing.postal_code is None and mdata.postal_code:
+            if (existing.postal_code is None or same_source) and mdata.postal_code:
                 existing.postal_code = mdata.postal_code
-            if existing.address is None and mdata.address:
+            if (existing.address is None or same_source) and mdata.address:
                 existing.address = mdata.address
+            if same_source:
+                existing.market_type = mdata.market_type
             # "DE" is the MarketData default, so a source reporting another
             # country corrects it; a known country is never reset to the default.
-            if existing.country == "DE" and mdata.country != "DE":
+            if (existing.country == "DE" or same_source) and mdata.country != "DE":
                 existing.country = mdata.country
             # A validated recrawl may repair an older low-confidence result.
-            if lat is not None and (existing.latitude is None or existing.geocode_uncertain):
+            if location_changed or (
+                lat is not None and (existing.latitude is None or existing.geocode_uncertain)
+            ):
                 existing.latitude = lat
                 existing.longitude = lon
                 existing.geocode_uncertain = uncertain
@@ -274,6 +294,19 @@ def _upsert_market(
             return 0, 1
 
 
+def _location_changed(existing: Market, mdata: MarketData) -> bool:
+    """New nonempty address data must be checked before reusing coordinates."""
+    return any(
+        new and new != old
+        for old, new in (
+            (existing.city, mdata.city),
+            (existing.postal_code, mdata.postal_code),
+            (existing.address, mdata.address),
+            (existing.country, mdata.country if mdata.country != "DE" else existing.country),
+        )
+    )
+
+
 def _get_trusted_coordinates(mdata: MarketData) -> tuple[float, float] | None:
     with Session(get_engine()) as session:
         existing = _find_existing_market(session, mdata)
@@ -282,12 +315,15 @@ def _get_trusted_coordinates(mdata: MarketData) -> tuple[float, float] | None:
             or existing.geocode_uncertain
             or existing.latitude is None
             or existing.longitude is None
+            or _location_changed(existing, mdata)
         ):
             return None
         return existing.latitude, existing.longitude
 
 
-def _find_existing_market(session: Session, mdata: MarketData) -> Market | None:
+def _find_existing_market(
+    session: Session, mdata: MarketData, source_name: str = ""
+) -> Market | None:
     existing = None
 
     # Phase 1a — cross-source dedup via postal code (most reliable).
@@ -297,6 +333,7 @@ def _find_existing_market(session: Session, mdata: MarketData) -> Market | None:
                 Market.name == mdata.name,
                 Market.start_date == mdata.start_date,
                 Market.postal_code == mdata.postal_code,
+                Market.country == mdata.country,
             )
         ).first()
 
@@ -308,6 +345,7 @@ def _find_existing_market(session: Session, mdata: MarketData) -> Market | None:
                 Market.name == mdata.name,
                 Market.start_date == mdata.start_date,
                 Market.city == mdata.city,
+                Market.country == mdata.country,
             )
         ).first()
 
@@ -330,6 +368,18 @@ def _find_existing_market(session: Session, mdata: MarketData) -> Market | None:
                 Market.start_date == mdata.start_date,
                 Market.source_url == mdata.source_url,
             )
+        ).first()
+
+    if existing is None and has_stable_event_url(source_name, mdata.source_url):
+        existing = session.exec(
+            select(Market)
+            .where(
+                Market.source_name == source_name,
+                Market.source_url == mdata.source_url,
+                Market.start_date <= mdata.end_date,
+                Market.end_date >= mdata.start_date,
+            )
+            .order_by(Market.updated_at.desc())  # type: ignore[attr-defined]
         ).first()
 
     return existing

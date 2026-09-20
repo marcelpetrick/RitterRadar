@@ -27,13 +27,23 @@ jobs:
           pip install -e ".[dev]"
 
       - name: Lint (ruff)
-        run: ruff check src tests
+        run: ruff check src tests scripts/browser_test.py scripts/audit_month.py
 
       - name: Format check (ruff)
-        run: ruff format --check src tests
+        run: ruff format --check src tests scripts/browser_test.py scripts/audit_month.py
 
       - name: Type check (mypy)
         run: mypy src
 
       - name: Test (pytest)
         run: pytest
+
+      - name: Install browser test dependencies
+        if: matrix.python-version == '3.14'
+        run: |
+          pip install -e ".[browser]"
+          python -m playwright install --with-deps chromium
+
+      - name: Browser regression tests
+        if: matrix.python-version == '3.14'
+        run: python scripts/browser_test.py

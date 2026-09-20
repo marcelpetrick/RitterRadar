@@ -54,8 +54,8 @@ from ritterradar.crawler.registry import register
 
 logger = logging.getLogger(__name__)
 
-__version__ = "0.1.0"
-_VERIFIED_DATE = "2026-06-26"
+__version__ = "0.2.0"
+_VERIFIED_DATE = "2026-09-19"
 
 _URL = "https://trollfelsen.de/termine"
 
@@ -86,6 +86,11 @@ def _parse_location(text: str) -> tuple[str | None, str | None, str]:
         country_code = m.group(1)
         postal_code = m.group(2)
         city = m.group(3).strip()
+        if country_code == "NL":
+            suffix = re.match(r"^([A-Z]{2})\s+(.+)$", city)
+            if suffix:
+                postal_code += " " + suffix.group(1)
+                city = suffix.group(2)
         # city may have trailing notes after the actual city name
         city = re.split(r"[\|,;]", city)[0].strip()
         country = _COUNTRY_MAP.get(country_code, country_code)
@@ -132,7 +137,7 @@ def _parse_card(card: Tag) -> MarketData | None:
         city=city,
         postal_code=postal_code,
         country=country,
-        market_type="medieval",
+        market_type="fantasy" if re.search(r"elfia|fantasy", name, re.I) else "medieval",
         source_url=source_url,
         confidence_score=0.9,
         original_text=text[:500],

@@ -44,8 +44,8 @@ from ritterradar.crawler.registry import register
 
 logger = logging.getLogger(__name__)
 
-__version__ = "0.2.0"
-_VERIFIED_DATE = "2026-09-14"
+__version__ = "0.3.0"
+_VERIFIED_DATE = "2026-09-19"
 
 BASE = "https://marktkalendarium.de"
 
@@ -89,11 +89,11 @@ def _parse_date(text: str) -> date | None:
 
 def _parse_location(cell: Tag) -> tuple[str | None, str | None, str]:
     """Return (postal_code, city, country_iso) from the location cell."""
-    raw = cell.get_text(strip=True)
+    raw = " ".join(cell.get_text(" ", strip=True).split())
     # raw example: "D-55232 Alzey" or "A-1010 Wien" or "CH-8001 Zürich"
     country = "DE"
-    for prefix, iso in _COUNTRY_MAP.items():
-        if raw.upper().startswith(prefix.upper()):
+    for prefix, iso in sorted(_COUNTRY_MAP.items(), key=lambda item: -len(item[0])):
+        if re.match(re.escape(prefix) + r"(?=\s|\d)", raw, re.I):
             country = iso
             raw = raw[len(prefix) :]
             break
@@ -105,6 +105,9 @@ def _parse_location(cell: Tag) -> tuple[str | None, str | None, str]:
     # Validate postal code: must be at least 4 digits
     if postal_code and not re.match(r"^\d{4,6}$", postal_code):
         postal_code = None
+        city = raw.strip()
+    if city:
+        city = re.sub(r"\s*\(wo immer .*?\)", "", city, flags=re.I).strip() or None
 
     return postal_code, city, country
 
@@ -137,6 +140,9 @@ def _parse_row(row: Tag) -> MarketData | None:
         return None
     if end is None:
         end = start  # single-day event (shouldn't occur but defensive)
+    if end < start:
+        logger.warning("Ignoring reversed date range: %s to %s", start, end)
+        return None
 
     # Names may span lines ("Mittelaltermeile<br/>Altstadtfest"); keep a space.
     name = " ".join(cells[2].get_text(" ", strip=True).split())

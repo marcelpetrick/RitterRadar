@@ -396,10 +396,42 @@ pytest --no-cov -x -q       # fast, stop on first failure
 The suite runs fully offline: crawler adapters are tested against HTML, JSON
 and iCal fixtures through a fake HTTP client, and the geocoder is stubbed.
 
+### Browser regression tests
+
+```bash
+pip install -e ".[dev,browser]"
+python -m playwright install chromium
+python scripts/browser_test.py
+```
+
+The browser test starts the real app with a temporary database, fixed September
+2026 dates, and disabled crawlers. External requests are blocked. It checks month
+overlap, theme exclusions, map/list consistency, duplicate handling, and empty or
+invalid filters. CI runs it on Python 3.14. An installed Chromium can be selected
+with `RITTERRADAR_BROWSER_EXECUTABLE`.
+
+### Audit live calendar results
+
+```bash
+python scripts/audit_month.py --month 2026-09
+```
+
+This read-only JSON audit lists per-source crawl results, excluded records,
+unmapped or uncertain locations, conflicting dates, and title/year mismatches.
+Counts are source records, not unique events. The app shows events overlapping
+the selected months, including events that start in the preceding month.
+
+The supported themes are medieval, Renaissance, Viking, fantasy, and themed
+Christmas events. Explicit cancellations, Roman/Stone Age events, science-fiction
+events, and unrelated museum/workshop programmes are excluded. Because Fyndling
+also includes general museum programmes, its titles must identify a supported
+theme or historical fair; ambiguous titles can be omitted. Exclusions apply to
+stored records too, without deleting them or changing the user's hidden flags.
+
 ### Lint and format
 
 ```bash
-ruff check src tests         # lint
+ruff check src tests scripts/browser_test.py scripts/audit_month.py  # lint
 ruff format src tests        # format
 mypy src                     # type check
 ```
@@ -411,7 +443,9 @@ mypy src                     # type check
 just ci
 
 # without just:
-ruff check src tests && mypy src && pytest
+ruff check src tests scripts/browser_test.py scripts/audit_month.py
+ruff format --check src tests scripts/browser_test.py scripts/audit_month.py
+mypy src && pytest && python scripts/browser_test.py
 ```
 
 ### Build Sphinx documentation

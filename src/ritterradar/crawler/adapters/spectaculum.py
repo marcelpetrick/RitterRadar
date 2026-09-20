@@ -25,8 +25,8 @@ from ritterradar.crawler.registry import register
 
 logger = logging.getLogger(__name__)
 
-__version__ = "0.1.0"
-_VERIFIED_DATE = "2026-06-25"
+__version__ = "0.2.0"
+_VERIFIED_DATE = "2026-09-19"
 
 BASE = "https://www.spectaculum.de"
 
@@ -90,6 +90,8 @@ class SpectaculumAdapter(AbstractCrawlerAdapter):
 
             # Normalise city: strip trailing "1", "2" sub-event suffixes if purely numeric
             city_clean = re.sub(r"\s+\d+$", "", city).strip() or city
+            # "Retro MPS" describes the festival format, not the municipality.
+            location = re.sub(r"^(?:Retro[ -]+)?MPS\s+", "", city_clean, flags=re.I)
 
             try:
                 start = date(year, int(start_month), int(start_day))
@@ -105,7 +107,7 @@ class SpectaculumAdapter(AbstractCrawlerAdapter):
                     name=f"MPS {city_clean}",
                     start_date=start,
                     end_date=end,
-                    city=city_clean,
+                    city=location,
                     source_url=source_url,
                     market_type="medieval",
                     confidence_score=0.95,

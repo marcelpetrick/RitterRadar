@@ -327,7 +327,7 @@ async def test_marktkalendarium_parses_rows_and_skips_invalid_ones():
         marktkalendarium.BASE,
     )
     assert (zuerich.country, zuerich.market_type) == ("CH", "viking")
-    assert (ohne.postal_code, ohne.city) == (None, None)
+    assert (ohne.postal_code, ohne.city) == (None, "Musterstadt")
 
 
 # ── Trollfelsen.de (event cards) ────────────────────────────────────────

@@ -8,6 +8,25 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.0.88] — 2026-09-20
+### Fixed
+- Month filters include events spanning month boundaries and reject reversed
+  ranges. Clearing all event categories now clears the map and preview.
+- Exclude cancelled, out-of-scope, and invalid-date records from results;
+  general museum programmes no longer default to medieval events.
+- Parse Retro MPS city labels, Dutch postcode suffixes, Swiss location labels,
+  and places without postcodes correctly; preserve foreign REST-feed countries.
+- Re-crawls repair location fields and revalidate coordinates after a location
+  changes. Repeated failed geocoding requests are reused within a crawl.
+- Corrected iCal dates update the event, and old overlapping date records are
+  suppressed without deleting history or merging separate recurring dates.
+- Duplicate detection checks titles and countries, retains distinct events
+  sharing a postcode, and prefers records with reliable coordinates.
+
+### Tests
+- Add September data regression fixtures and an isolated offline browser test
+  to CI, plus a read-only month-audit command for live data checks.
+
 ## [0.0.87] — 2026-09-19
 ### Changed
 - Updated Uvicorn from 0.52.4 to 0.53.0, SQLAlchemy from 2.0.52 to 2.0.54,

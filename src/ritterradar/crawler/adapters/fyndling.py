@@ -42,8 +42,8 @@ from ritterradar.crawler.registry import register
 
 logger = logging.getLogger(__name__)
 
-__version__ = "0.2.0"
-_VERIFIED_DATE = "2026-09-14"
+__version__ = "0.3.0"
+_VERIFIED_DATE = "2026-09-19"
 
 _URL = "https://fyndling.de/maerkte.html"
 
@@ -83,10 +83,16 @@ def _parse_dates(text: str) -> tuple[date, date] | None:
 
 
 def _clean_city(city: str, country: str) -> str | None:
+    city = re.sub(r"\s*\(wo immer .*?\)", "", city, flags=re.I).strip()
+    if city.casefold() == "neues ok" or re.fullmatch(r"\d*x+", city, re.I):
+        return None
     words = city.split()
     # Swiss places often carry their canton: "Zofingen AG", "Laupen BE"
     if country == "CH" and len(words) > 1 and words[-1] in _SWISS_CANTONS:
         words = words[:-1]
+    # Venue and municipality are sometimes repeated: "Schloss Lenzburg Lenzburg AG".
+    if len(words) >= 3 and words[-1].casefold() == words[-2].casefold():
+        words = [words[-1]]
     return " ".join(words) or None
 
 

@@ -15,7 +15,9 @@ from pydantic import BaseModel
 from sqlmodel import Session, select
 
 from ritterradar.database.session import get_session
+from ritterradar.event_scope import exclusion_reason
 from ritterradar.geocoding.haversine import distance_km
+from ritterradar.market_identity import current_source_records
 from ritterradar.models.market import Market
 
 router = APIRouter(prefix="/api/markets", tags=["markets"])
@@ -48,34 +50,35 @@ class MarketOut(BaseModel):
 @router.get("", response_model=list[MarketOut])
 async def list_markets(
     session: Annotated[Session, Depends(get_session)],
-    date_from: date | None = Query(default=None, description="Earliest start_date (YYYY-MM-DD)"),
-    date_to: date | None = Query(default=None, description="Latest start_date (YYYY-MM-DD)"),
-    lat: float | None = Query(default=None, description="Home latitude for distance filter"),
-    lon: float | None = Query(default=None, description="Home longitude for distance filter"),
-    radius_km: float | None = Query(default=None, description="Max straight-line distance in km"),
+    date_from: date | None = Query(default=None, description="First day to include (YYYY-MM-DD)"),
+    date_to: date | None = Query(default=None, description="Last day to include (YYYY-MM-DD)"),
+    lat: float | None = Query(default=None, ge=-90, le=90),
+    lon: float | None = Query(default=None, ge=-180, le=180),
+    radius_km: float | None = Query(default=None, ge=0),
     include_hidden: bool = Query(default=False),
     market_type: list[str] = Query(default=[]),
 ) -> list[MarketOut]:
     """Return markets matching the given filters."""
+    if date_from and date_to and date_from > date_to:
+        raise HTTPException(status_code=422, detail="date_from must not be after date_to")
     if (lat is None) != (lon is None):
         raise HTTPException(status_code=422, detail="lat and lon must be provided together")
     if radius_km is not None and (lat is None or lon is None):
         raise HTTPException(status_code=422, detail="radius_km requires lat and lon")
 
-    stmt = select(Market)
-    if not include_hidden:
-        stmt = stmt.where(Market.hidden == False)  # noqa: E712
-    if date_from:
-        stmt = stmt.where(Market.start_date >= date_from)
-    if date_to:
-        stmt = stmt.where(Market.start_date <= date_to)
-    if market_type:
-        stmt = stmt.where(cast(Any, Market.market_type).in_(market_type))
-
+    stmt = select(Market).where(Market.end_date >= Market.start_date)
     markets = session.exec(stmt.order_by(cast(Any, Market.start_date))).all()
 
     results: list[MarketOut] = []
-    for m in markets:
+    # Resolve corrected source dates before filtering: otherwise an old record
+    # can reappear when its replacement moved outside the requested month.
+    for m in current_source_records(list(markets)):
+        if (m.hidden and not include_hidden) or (market_type and m.market_type not in market_type):
+            continue
+        if (date_from and m.end_date < date_from) or (date_to and m.start_date > date_to):
+            continue
+        if exclusion_reason(m.name, m.source_name):
+            continue
         dist: float | None = None
         market_lat = m.latitude
         market_lon = m.longitude
