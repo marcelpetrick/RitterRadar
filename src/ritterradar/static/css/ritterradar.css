@@ -626,6 +626,7 @@ input[type="range"]::-moz-range-thumb {
   left: 260px;
   right: 360px;
   max-height: 280px;
+  overflow: hidden;
   background: rgba(26, 13, 4, 0.94);
   border-top: 2px solid var(--gold-dim);
   border-right: var(--border-gold);
@@ -720,7 +721,8 @@ input[type="range"]::-moz-range-thumb {
 .preview-date {
   color: var(--gold);
   font-size: 0.78rem;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .preview-main {

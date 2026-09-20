@@ -8,6 +8,12 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.0.89] — 2026-09-20
+### Fixed
+- Wrap long event date ranges within the preview column and clip preview
+  contents during expansion, preventing overlaps with names and the jobs panel.
+- Add a browser assertion that date labels stay within their allotted width.
+
 ## [0.0.88] — 2026-09-20
 ### Fixed
 - Month filters include events spanning month boundaries and reject reversed

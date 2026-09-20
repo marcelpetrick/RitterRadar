@@ -46,6 +46,7 @@ precision still vary between sources; display deduplication is heuristic.
 | Medium | Changed iCal dates left two listings for the same event. | Update overlapping dates for Taterman's canonical event URLs; suppress historical duplicates without deleting them; retain disjoint recurring dates. |
 | Medium | Invalid source ranges entered the database. | Reject reversed Pfalzis dates on ingestion; exclude existing invalid ranges from results. |
 | Low | The same bad address triggered repeated geocoding attempts during a crawl. | Reuse results, including failures, within that crawl; retry on later crawls. |
+| Low | Long date labels and an expanding preview overlapped adjacent content. | Wrap date labels and clip animated panel contents; browser width assertion reproduced the failure before the fix. |
 
 The Taterman feed currently reports Judenburg on 25–27 September. Its older
 26–27 September record is now suppressed. The organiser's
@@ -96,5 +97,5 @@ wheel/sdist metadata checks, and a Docker build with HTTP/static-asset smoke tes
 
 [v0.0.87](https://github.com/marcelpetrick/RitterRadar/releases/tag/v0.0.87) is the
 public dependency-maintenance release. Its CI, release assets, and amd64/arm64
-Docker publication completed successfully. These audit fixes are version 0.0.88
+Docker publication completed successfully. These audit fixes are versions 0.0.88–0.0.89
 and do not alter that release tag.

@@ -96,6 +96,10 @@ def check_browser(base_url: str) -> None:
             expect(page.locator("#preview-list")).not_to_contain_text("Sense")
             expect(page.locator("#preview-list")).not_to_contain_text("Kloster 2026")
             expect(page.locator(".rr-marker")).to_have_count(4)
+            for label in page.locator(".preview-date").all():
+                assert label.evaluate("el => el.scrollWidth <= el.clientWidth"), (
+                    "Date range must not overlap the event name"
+                )
 
             # Distinct events sharing a postcode survive; clearing types shows none.
             for checkbox in page.locator("#type-filters input").all():
