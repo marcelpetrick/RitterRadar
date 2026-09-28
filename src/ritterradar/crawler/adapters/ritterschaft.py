@@ -39,7 +39,7 @@ class RitterschaftAdapter(AbstractCrawlerAdapter):
             response.raise_for_status()
         except Exception:
             logger.exception("%s: failed to fetch %s", self.SOURCE_NAME, self.BASE_URL)
-            return []
+            raise
 
         soup = BeautifulSoup(response.text, "lxml")
         items = soup.find_all(class_=re.compile(r"event|termin|veranstaltung|markt|eintrag", re.I))

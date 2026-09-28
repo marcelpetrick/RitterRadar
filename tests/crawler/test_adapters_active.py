@@ -6,9 +6,12 @@ import json
 from datetime import date
 
 import pytest
+from bs4 import BeautifulSoup
 
 from ritterradar.crawler.adapters import (
+    fyndling,
     marktkalendarium,
+    mittelalterkalender_info,
     mittelaltermarkt_online,
     spectaculum,
     taterman_at,
@@ -18,6 +21,57 @@ from ritterradar.crawler.adapters import (
 from tests.crawler.fake_client import FakeClient
 
 Y = date.today().year
+
+
+def test_fyndling_rejects_malformed_rows_and_failed_fetches():
+    assert fyndling._parse_dates("not a date") is None
+    assert fyndling._parse_dates("32.13.2027") is None
+    assert fyndling._parse_row(BeautifulSoup("<tr><td>too few</td></tr>", "lxml").tr) is None
+
+    bad_date = "<tr><td>nonsense</td><td>Rittermarkt</td><td>24103 Kiel</td></tr>"
+    assert fyndling.parse_market_table(bad_date, Y) == []
+    blank_name = "<tr><td>01.06.2027 - 02.06.2027</td><td></td><td>24103 Kiel</td></tr>"
+    assert fyndling.parse_market_table(blank_name, Y) == []
+
+
+async def test_fyndling_surfaces_upstream_failure():
+    class BrokenClient:
+        async def get(self, url):
+            raise OSError("offline")
+
+    with pytest.raises(OSError, match="offline"):
+        await fyndling.FyndlingAdapter().crawl(BrokenClient())  # type: ignore[arg-type]
+
+
+def test_mittelalterkalender_skips_invalid_dates_and_rows():
+    assert mittelalterkalender_info._parse_date("im Sommer") is None
+    assert mittelalterkalender_info._parse_date("32.13.2027") is None
+    soup = BeautifulSoup(
+        "<table><tr><td>too few</td></tr>"
+        "<tr><td>nonsense</td><td>nonsense</td><td>Fest</td><td>1</td><td>Ort</td></tr>"
+        "<tr><td>01.06.2027</td><td>02.06.2027</td><td><button></button></td>"
+        "<td>1</td><td>Ort</td></tr></table>",
+        "lxml",
+    )
+    assert all(mittelalterkalender_info._parse_row(row) is None for row in soup.find_all("tr"))
+
+
+async def test_mittelalterkalender_skips_pages_without_event_rows():
+    today = date.today()
+    pages = {
+        mittelalterkalender_info._HOME: "<html><body>no yearly links</body></html>",
+        **{
+            url: "<html><body><p>no event rows</p></body></html>"
+            for year in (today.year, today.year + 1)
+            for url in mittelalterkalender_info._fallback_urls(year)
+        },
+    }
+    assert (
+        await mittelalterkalender_info.MittelalterkalenderInfoAdapter().crawl(
+            FakeClient(pages)  # type: ignore[arg-type]
+        )
+        == []
+    )
 
 
 # ── Taterman.at (iCal) ──────────────────────────────────────────────────
@@ -191,7 +245,8 @@ def test_mittelaltermarkt_online_category_types(slug, expected):
 async def test_mittelaltermarkt_online_stops_on_errors():
     adapter = mittelaltermarkt_online.MittelaltermarktOnlineAdapter()
     assert await adapter.crawl(FakeClient({})) == []  # type: ignore[arg-type]
-    assert await adapter.crawl(FakeClient({_api_url(1): "<html>"})) == []  # type: ignore[arg-type]
+    with pytest.raises(ValueError, match="Invalid upstream JSON"):
+        await adapter.crawl(FakeClient({_api_url(1): "<html>"}))  # type: ignore[arg-type]
 
 
 # ── Vehi Mercatus (paginated HTML) ──────────────────────────────────────
@@ -412,4 +467,5 @@ async def test_spectaculum_parses_navigation_links():
 
 
 async def test_spectaculum_returns_empty_list_when_homepage_fails():
-    assert await spectaculum.SpectaculumAdapter().crawl(FakeClient({})) == []  # type: ignore[arg-type]
+    with pytest.raises(RuntimeError):
+        await spectaculum.SpectaculumAdapter().crawl(FakeClient({}))  # type: ignore[arg-type]

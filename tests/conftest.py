@@ -11,6 +11,8 @@ from sqlalchemy.pool import StaticPool
 from sqlmodel import Session, SQLModel, create_engine
 
 # Point config away from any real file before app code loads
+os.environ["RITTERRADAR_ALLOWED_HOSTS"] = '["testserver", "127.0.0.1", "localhost"]'
+os.environ["RITTERRADAR_REQUEST_LIMIT"] = "10000"
 os.environ.setdefault("RITTERRADAR_DB_PATH", ":memory:")
 os.environ.setdefault("RITTERRADAR_SOURCES_FILE", "config/sources.yaml")
 os.environ.setdefault("RITTERRADAR_GEOCODER_EMAIL", "test@example.com")
@@ -52,5 +54,10 @@ def session(test_engine) -> Generator[Session, None, None]:
 def client(test_engine) -> Generator[TestClient, None, None]:
     from ritterradar.main import app
 
-    with TestClient(app, raise_server_exceptions=False) as c:
+    with TestClient(
+        app,
+        raise_server_exceptions=False,
+        client=("127.0.0.1", 50000),
+        headers={"X-RitterRadar-Request": "1"},
+    ) as c:
         yield c

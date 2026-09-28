@@ -57,6 +57,7 @@ import logging
 from datetime import date, datetime
 from typing import Any
 
+from ritterradar.config import get_settings
 from ritterradar.crawler.base_adapter import AbstractCrawlerAdapter, MarketData
 from ritterradar.crawler.http_client import PoliteHttpClient
 from ritterradar.crawler.registry import register
@@ -167,8 +168,8 @@ def _parse_event(ev: JsonObject) -> MarketData | None:
     country = _COUNTRY_ISO.get(str(country_raw).strip(), "DE")
     if isinstance(country_raw, str) and len(country_raw.strip()) == 2:
         country = country_raw.strip().upper()
-    geo_lat: float | None = venue.get("geo_lat") or None
-    geo_lng: float | None = venue.get("geo_lng") or None
+    geo_lat: float | None = venue.get("geo_lat")
+    geo_lng: float | None = venue.get("geo_lng")
 
     # Postal code cleanup (some entries have spaces or letters)
     if postal_code:
@@ -232,10 +233,12 @@ class MittelaltermarktOnlineAdapter(AbstractCrawlerAdapter):
                 data: JsonObject = response.json()
             except Exception:
                 logger.warning("%s: non-JSON response on page %d", self.SOURCE_NAME, page)
-                break
+                raise ValueError("Invalid upstream JSON") from None
 
             if page == 1:
                 total_pages = int(data.get("total_pages", 1))
+                if not 1 <= total_pages <= get_settings().max_crawl_pages:
+                    raise ValueError("Upstream page count exceeds budget")
                 total = int(data.get("total", 0))
                 logger.info(
                     "%s: %d events across %d pages",
@@ -245,6 +248,10 @@ class MittelaltermarktOnlineAdapter(AbstractCrawlerAdapter):
                 )
 
             events: list[JsonObject] = data.get("events") or []
+            if not events:
+                break
+            if len(results) + len(events) > get_settings().max_crawl_records:
+                raise ValueError("Upstream record count exceeds budget")
             for ev in events:
                 mdata = _parse_event(ev)
                 if mdata:

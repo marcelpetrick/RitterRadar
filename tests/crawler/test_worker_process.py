@@ -91,10 +91,129 @@ async def test_adapter_error_fails_job_and_records_source_error(session: Session
     job = session.get(CrawlJob, job_id)
     source = session.get(Source, source_id)
     assert job is not None and source is not None
-    assert (job.status, job.error_message) == ("failed", "site down")
+    assert (job.status, job.error_message) == ("failed", "Adapter failed: RuntimeError")
     assert job.finished_at is not None
-    assert source.last_error == "site down"
+    assert source.last_error == "Adapter failed: RuntimeError"
     assert source.last_crawled_at is not None
+
+
+async def test_invalid_records_and_excluded_events_are_reported_as_partial(
+    session: Session, monkeypatch
+):
+    markets = [
+        object(),  # A broken adapter record is rejected before persistence.
+        MarketData(
+            name="Römerfest Carnuntum",
+            start_date=date(2031, 6, 1),
+            end_date=date(2031, 6, 2),
+            source_url="https://example.com/invalid-event",
+        ),
+        MarketData(
+            name="Reversed dates",
+            start_date=date(2031, 7, 2),
+            end_date=date(2031, 7, 1),
+            source_url="https://example.com/reversed-dates",
+        ),
+    ]
+    monkeypatch.setattr(worker_mod, "get_adapter", lambda name: _StubAdapter(markets))
+    source_id, job_id = _make_job(session, "Worker partial source")
+
+    await _worker()._process(job_id, None)  # type: ignore[arg-type]
+
+    session.expire_all()
+    job = session.get(CrawlJob, job_id)
+    source = session.get(Source, source_id)
+    assert job is not None and source is not None
+    assert job.status == "failed"
+    assert job.events_discovered == 3
+    assert job.error_message.startswith("Partial crawl: 1 invalid records")
+    assert source.last_error == job.error_message
+    assert (
+        session.exec(select(Market).where(Market.source_name == "Worker partial source")).all()
+        == []
+    )
+
+
+async def test_failed_geocode_is_coalesced_across_duplicate_locations(
+    session: Session, monkeypatch
+):
+    markets = [
+        MarketData(
+            name=f"Unlocated listing {index}",
+            start_date=date(2031, 8, index),
+            end_date=date(2031, 8, index),
+            city="Bremen",
+            source_url=f"https://example.com/unlocated-{index}",
+        )
+        for index in (1, 2)
+    ]
+    calls: list[str] = []
+
+    async def failed_geocode(query: str, user_agent: str, **kwargs: object) -> None:
+        calls.append(query)
+        return None
+
+    monkeypatch.setattr(worker_mod, "geocode", failed_geocode)
+    monkeypatch.setattr(worker_mod, "get_adapter", lambda name: _StubAdapter(markets))
+    _, job_id = _make_job(session, "Worker geocode miss")
+
+    await _worker()._process(job_id, None)  # type: ignore[arg-type]
+
+    job = session.get(CrawlJob, job_id)
+    assert job is not None and job.status == "completed"
+    assert calls == ["Bremen"]
+    saved = session.exec(select(Market).where(Market.city == "Bremen")).all()
+    assert {market.name for market in saved} == {"Unlocated listing 1", "Unlocated listing 2"}
+
+
+async def test_record_limit_failure_marks_job_and_source(session: Session, monkeypatch):
+    markets = [
+        MarketData(
+            name="Over-budget event",
+            start_date=date(2031, 9, 1),
+            end_date=date(2031, 9, 2),
+            source_url="https://example.com/over-budget",
+        )
+    ]
+    settings = worker_mod.get_settings()
+    monkeypatch.setattr(settings, "max_crawl_records", 0)
+    monkeypatch.setattr(worker_mod, "get_adapter", lambda name: _StubAdapter(markets))
+    source_id, job_id = _make_job(session, "Worker budget source")
+
+    await _worker()._process(job_id, None)  # type: ignore[arg-type]
+
+    session.expire_all()
+    job = session.get(CrawlJob, job_id)
+    source = session.get(Source, source_id)
+    assert job is not None and source is not None
+    assert job.status == "failed"
+    assert job.error_message == "Processing failed or crawl deadline exceeded"
+    assert source.last_error == job.error_message
+
+
+async def test_process_cancellation_marks_job_before_propagating(session: Session, monkeypatch):
+    _, job_id = _make_job(session, "Worker cancelled source")
+    worker = _worker()
+    entered = asyncio.Event()
+
+    async def blocked_process_job(job_id: int, client: object) -> None:
+        entered.set()
+        await asyncio.Event().wait()
+
+    monkeypatch.setattr(worker, "_process_job", blocked_process_job)
+    task = asyncio.create_task(worker._process(job_id, None))  # type: ignore[arg-type]
+    await entered.wait()
+    task.cancel()
+    try:
+        await task
+    except asyncio.CancelledError:
+        pass
+    else:
+        raise AssertionError("worker cancellation must propagate")
+
+    job = session.get(CrawlJob, job_id)
+    assert job is not None and job.status == "failed"
+    assert job.error_message == "Interrupted by application shutdown"
 
 
 async def test_successful_crawl_geocodes_only_what_is_needed(session: Session, monkeypatch):

@@ -10,7 +10,7 @@
 from datetime import UTC, date, datetime
 from typing import Annotated, Any, cast
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from pydantic import BaseModel
 from sqlmodel import Session, select
 
@@ -48,8 +48,11 @@ class MarketOut(BaseModel):
 
 
 @router.get("", response_model=list[MarketOut])
-async def list_markets(
+def list_markets(
     session: Annotated[Session, Depends(get_session)],
+    response: Response,
+    limit: int = Query(default=2000, ge=1, le=2000),
+    offset: int = Query(default=0, ge=0, le=20000),
     date_from: date | None = Query(default=None, description="First day to include (YYYY-MM-DD)"),
     date_to: date | None = Query(default=None, description="Last day to include (YYYY-MM-DD)"),
     lat: float | None = Query(default=None, ge=-90, le=90),
@@ -67,8 +70,10 @@ async def list_markets(
         raise HTTPException(status_code=422, detail="radius_km requires lat and lon")
 
     stmt = select(Market).where(Market.end_date >= Market.start_date)
-    markets = session.exec(stmt.order_by(cast(Any, Market.start_date))).all()
+    markets = session.exec(stmt.order_by(cast(Any, Market.start_date)).limit(20001)).all()
 
+    if len(markets) > 20000:
+        raise HTTPException(503, "Market storage budget exceeded; archive old events")
     results: list[MarketOut] = []
     # Resolve corrected source dates before filtering: otherwise an old record
     # can reappear when its replacement moved outside the requested month.
@@ -115,7 +120,8 @@ async def list_markets(
             )
         )
 
-    return results
+    response.headers["X-Total-Count"] = str(len(results))
+    return results[offset : offset + limit]
 
 
 @router.post("/{market_id}/hide")

@@ -25,7 +25,7 @@ class _FakeLocation:
 
 def _install_fake_nominatim(monkeypatch, address: dict[str, str], calls: list[dict]) -> None:
     class FakeNominatim:
-        def __init__(self, *, user_agent: str) -> None:
+        def __init__(self, *, user_agent: str, **kwargs) -> None:
             assert user_agent == "RitterRadar/test"
 
         def geocode(self, query, **kwargs):

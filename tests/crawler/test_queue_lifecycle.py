@@ -2,6 +2,7 @@
 # Copyright (C) 2026 Marcel Petrick <mail@marcelpetrick.it>
 """Tests for crawl queue worker lifecycle and source seeding."""
 
+import pytest
 from sqlmodel import Session, select
 
 from ritterradar.config import Settings
@@ -29,6 +30,36 @@ async def test_start_and_stop_spawn_and_join_workers(tmp_path, monkeypatch):
 
     assert queue.get_status()["workers"] == 2
     assert all(w._task is not None and w._task.done() for w in queue._workers)
+
+
+async def test_stop_accounts_for_pending_ids_and_scheduler_interval(monkeypatch):
+    import asyncio
+
+    queue = CrawlQueue(Settings(workers=0))
+    queue._queue.put_nowait(123)
+    await queue.stop()
+    assert queue._queue.empty()
+
+    calls = 0
+
+    async def sleep(_seconds):
+        nonlocal calls
+        calls += 1
+        if calls == 2:
+            raise asyncio.CancelledError
+
+    enqueues = 0
+
+    def enqueue():
+        nonlocal enqueues
+        enqueues += 1
+        return 0
+
+    queue._enqueue_all = enqueue  # type: ignore[method-assign]
+    monkeypatch.setattr("ritterradar.crawler.queue.asyncio.sleep", sleep)
+    with pytest.raises(asyncio.CancelledError):
+        await queue._schedule()
+    assert enqueues == 1
 
 
 def test_seed_sources_ignores_missing_and_malformed_files(tmp_path):

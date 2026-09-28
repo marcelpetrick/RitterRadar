@@ -9,13 +9,15 @@
 
 import asyncio
 import logging
+import math
 import re
 from dataclasses import dataclass, replace
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from typing import Any, cast
 
-from sqlmodel import Session, select
+from sqlmodel import Session, delete, select
 
+from ritterradar.config import get_settings
 from ritterradar.database.engine import get_engine
 from ritterradar.models.geocoding_cache import GeocodingCache
 
@@ -70,6 +72,8 @@ async def geocode(
     Sets ``uncertain=True`` for coarse results (country, state, county) and for
     results that neither name the requested *city* nor reach an importance of 0.4.
     """
+    if get_settings().offline:
+        return None
     cache_key = _cache_key(query, country_code, postal_code, city)
     if not cache_key:
         return None
@@ -189,6 +193,9 @@ def _cache_get(normalised_query: str) -> GeoResult | None:
         ).first()
         if row is None:
             return None
+        cutoff = datetime.now(UTC).replace(tzinfo=None) - timedelta(days=get_settings().cache_days)
+        if row.cached_at.replace(tzinfo=None) < cutoff:
+            return None
         return GeoResult(
             latitude=row.latitude,
             longitude=row.longitude,
@@ -199,6 +206,8 @@ def _cache_get(normalised_query: str) -> GeoResult | None:
 
 def _cache_set(normalised_query: str, result: GeoResult) -> None:
     with Session(get_engine()) as session:
+        cutoff = datetime.now(UTC) - timedelta(days=get_settings().cache_days)
+        session.exec(delete(GeocodingCache).where(cast(Any, GeocodingCache.cached_at) < cutoff))
         existing = session.exec(
             select(GeocodingCache).where(GeocodingCache.query == normalised_query)
         ).first()
@@ -254,7 +263,7 @@ async def _nominatim_lookup(
         )
         return result
     except Exception:
-        logger.exception("Nominatim lookup failed for query %r", query)
+        logger.warning("Nominatim lookup failed; private query omitted")
         return None
 
 
@@ -268,7 +277,9 @@ def _blocking_lookup(
 ) -> GeoResult | None:
     from geopy.geocoders import Nominatim
 
-    geolocator = Nominatim(user_agent=user_agent)
+    from ritterradar.geocoding.transport import SafeGeocoderAdapter
+
+    geolocator = Nominatim(user_agent=user_agent, adapter_factory=SafeGeocoderAdapter, timeout=10)
     location = geolocator.geocode(
         query,
         exactly_one=True,
@@ -279,13 +290,20 @@ def _blocking_lookup(
     if location is None:
         return None
 
+    lat, lon = float(location.latitude), float(location.longitude)
+    if (
+        not math.isfinite(lat)
+        or not math.isfinite(lon)
+        or not (-90 <= lat <= 90 and -180 <= lon <= 180)
+    ):
+        return None
     importance: float = getattr(location, "importance", None) or 0.0
     raw: dict[str, Any] = getattr(location, "raw", {})
     display_name = str(location.address)
     if not _matches_expected_location(
         raw, country_code, postal_code, city=city, display_name=display_name
     ):
-        logger.warning("Rejected mismatched Nominatim result for query %r", query)
+        logger.warning("Rejected mismatched Nominatim result; private query omitted")
         return None
 
     uncertain = _is_uncertain(

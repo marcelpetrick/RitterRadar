@@ -8,6 +8,8 @@ registered and must keep working if a source is re-enabled or reused.
 
 from datetime import date
 
+import pytest
+
 from ritterradar.crawler.adapters import (
     generic_table,
     mittelalterfeste,
@@ -128,7 +130,8 @@ async def test_schwerttanz_parses_table_rows():
 
 
 async def test_schwerttanz_returns_empty_list_on_fetch_error():
-    assert await schwerttanz.SchwerttanzAdapter().crawl(FakeClient({})) == []  # type: ignore[arg-type]
+    with pytest.raises(RuntimeError):
+        await schwerttanz.SchwerttanzAdapter().crawl(FakeClient({}))  # type: ignore[arg-type]
 
 
 # ── ritterschaft.de ─────────────────────────────────────────────────────
@@ -157,7 +160,8 @@ async def test_ritterschaft_falls_back_to_articles_and_handles_errors():
     page = f"<article><h2>Turnier am Lech</h2><p>05.05.{Y}</p></article>"
     results = await ritterschaft.RitterschaftAdapter().crawl(FakeClient({_RS_URL: page}))  # type: ignore[arg-type]
     assert [r.name for r in results] == ["Turnier am Lech"]
-    assert await ritterschaft.RitterschaftAdapter().crawl(FakeClient({})) == []  # type: ignore[arg-type]
+    with pytest.raises(RuntimeError):
+        await ritterschaft.RitterschaftAdapter().crawl(FakeClient({}))  # type: ignore[arg-type]
 
 
 # ── generic_table ───────────────────────────────────────────────────────
@@ -188,4 +192,5 @@ async def test_generic_table_extracts_rows_from_tables():
 async def test_generic_table_without_url_or_on_error_returns_nothing():
     assert await generic_table.GenericTableAdapter().crawl(FakeClient({})) == []  # type: ignore[arg-type]
     adapter = generic_table.GenericTableAdapter(url="https://down.example/")
-    assert await adapter.crawl(FakeClient({})) == []  # type: ignore[arg-type]
+    with pytest.raises(RuntimeError):
+        await adapter.crawl(FakeClient({}))  # type: ignore[arg-type]

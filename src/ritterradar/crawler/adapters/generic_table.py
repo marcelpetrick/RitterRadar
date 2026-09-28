@@ -47,7 +47,7 @@ class GenericTableAdapter(AbstractCrawlerAdapter):
             response.raise_for_status()
         except Exception:
             logger.exception("GenericTableAdapter: failed to fetch %s", self.BASE_URL)
-            return []
+            raise
 
         soup = BeautifulSoup(response.text, "lxml")
         results: list[MarketData] = []

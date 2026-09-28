@@ -39,7 +39,7 @@ class SchwerttanzAdapter(AbstractCrawlerAdapter):
             response.raise_for_status()
         except Exception:
             logger.exception("%s: failed to fetch %s", self.SOURCE_NAME, self.BASE_URL)
-            return []
+            raise
 
         soup = BeautifulSoup(response.text, "lxml")
 

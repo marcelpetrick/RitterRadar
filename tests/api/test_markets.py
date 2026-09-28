@@ -4,9 +4,12 @@
 
 from datetime import UTC, date, datetime
 
+import pytest
+from fastapi import HTTPException, Response
 from fastapi.testclient import TestClient
 from sqlmodel import Session
 
+from ritterradar.api.markets import list_markets
 from ritterradar.models.market import Market
 
 
@@ -143,3 +146,35 @@ def test_market_type_filter(client: TestClient, session: Session):
     assert r.status_code == 200
     types = {m["market_type"] for m in r.json()}
     assert types <= {"viking"}
+
+
+def test_market_storage_safety_limit_returns_service_unavailable():
+    class Query:
+        def order_by(self, *_args):
+            return self
+
+        def limit(self, _limit):
+            return self
+
+        def all(self):
+            return [object()] * 20_001
+
+    class FakeSession:
+        def exec(self, _statement):
+            return Query()
+
+    with pytest.raises(HTTPException) as exc:
+        list_markets(
+            FakeSession(),
+            Response(),
+            limit=2000,
+            offset=0,
+            date_from=None,
+            date_to=None,
+            lat=None,
+            lon=None,
+            radius_km=None,
+            include_hidden=False,
+            market_type=[],
+        )
+    assert exc.value.status_code == 503

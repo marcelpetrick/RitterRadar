@@ -12,12 +12,14 @@ import logging.config
 from collections.abc import AsyncGenerator, Awaitable, Callable
 from contextlib import asynccontextmanager
 from importlib.metadata import version as _pkg_version
+from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse, Response
+from fastapi.responses import HTMLResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from sqlmodel import Session, text
 
 from ritterradar.api.crawl import router as crawl_router
 from ritterradar.api.markets import router as markets_router
@@ -25,7 +27,9 @@ from ritterradar.api.settings import router as settings_router
 from ritterradar.api.sources import router as sources_router
 from ritterradar.config import get_settings
 from ritterradar.crawler.queue import CrawlQueue
-from ritterradar.database.engine import create_tables
+from ritterradar.database.engine import create_tables, get_engine
+from ritterradar.runtime import InstanceLock, private_file
+from ritterradar.security import PrivateAccessLog, SecurityMiddleware
 
 _BASE = Path(__file__).parent
 _STATIC = _BASE / "static"
@@ -41,6 +45,13 @@ def _configure_logging() -> None:
         datefmt="%H:%M:%S",
         force=True,
     )
+    logging.getLogger("uvicorn.access").addFilter(PrivateAccessLog())
+    if str(settings.db_path) != ":memory:":
+        path = settings.db_path.parent / "ritterradar.log"
+        handler = RotatingFileHandler(path, maxBytes=2_000_000, backupCount=3, encoding="utf-8")
+        private_file(path)
+        handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(name)s %(message)s"))
+        logging.getLogger().addHandler(handler)
     # Suppress noisy third-party loggers at WARNING level
     for noisy in ("httpx", "httpcore", "geopy", "urllib3"):
         logging.getLogger(noisy).setLevel(logging.WARNING)
@@ -48,24 +59,24 @@ def _configure_logging() -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
-    _configure_logging()
     logger = logging.getLogger(__name__)
     settings = get_settings()
 
-    logger.info("RitterRadar starting up… version=%s", _VERSION)
-    create_tables()
-    logger.info("Database tables ready")
-
-    queue = CrawlQueue(settings)
-    app.state.crawl_queue = queue
-    await queue.start()
-    logger.info("Crawler queue started")
-
-    yield  # ← application runs here
-
-    logger.info("RitterRadar shutting down…")
-    await queue.stop()
-    logger.info("Crawler queue stopped")
+    ownership = InstanceLock(settings.db_path)
+    try:
+        _configure_logging()
+        logger.info("RitterRadar starting up… version=%s", _VERSION)
+        create_tables()
+        private_file(settings.db_path)
+        queue = CrawlQueue(settings)
+        app.state.crawl_queue = queue
+        await queue.start()
+        try:
+            yield
+        finally:
+            await queue.stop()
+    finally:
+        ownership.close()
 
 
 _VERSION = _pkg_version("ritterradar")
@@ -75,9 +86,11 @@ app = FastAPI(
     description="Discover German medieval markets on an interactive map",
     version=_VERSION,
     lifespan=lifespan,
-    docs_url="/api/docs",
-    redoc_url="/api/redoc",
+    docs_url=None,
+    redoc_url=None,
 )
+
+app.add_middleware(SecurityMiddleware)
 
 # Static files (CSS, JS, images)
 if _STATIC.exists():
@@ -100,13 +113,36 @@ async def add_static_cache_headers(
 @app.get("/", response_class=HTMLResponse, include_in_schema=False)
 async def index(request: Request) -> HTMLResponse:
     """Serve the main single-page application."""
-    return templates.TemplateResponse(request, "index.html", {"version": _VERSION})
+    return templates.TemplateResponse(
+        request, "index.html", {"version": _VERSION, "offline": get_settings().offline}
+    )
 
 
 @app.get("/health", tags=["health"])
 async def health() -> dict[str, str]:
     """Liveness check."""
     return {"status": "ok"}
+
+
+@app.get("/ready", include_in_schema=False)
+async def readiness() -> JSONResponse:
+    try:
+        with Session(get_engine()) as session:
+            session.exec(text("SELECT 1"))  # type: ignore[call-overload]
+        queue = getattr(app.state, "crawl_queue", None)
+        healthy = queue is not None and all(
+            worker._task is not None and not worker._task.done() for worker in queue._workers
+        )
+    except Exception:
+        healthy = False
+    return JSONResponse({"ready": healthy}, status_code=200 if healthy else 503)
+
+
+@app.get("/api/docs", response_class=HTMLResponse, include_in_schema=False)
+@app.get("/api/redoc", response_class=HTMLResponse, include_in_schema=False)
+async def api_reference(request: Request) -> HTMLResponse:
+    """Local API reference: no third-party JavaScript or inline script."""
+    return templates.TemplateResponse(request, "api.html", {"schema": app.openapi()})
 
 
 # Register routers
@@ -126,4 +162,5 @@ def run() -> None:
         host=settings.host,
         port=settings.port,
         log_level=settings.log_level.lower(),
+        access_log=False,
     )

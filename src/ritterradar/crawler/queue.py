@@ -8,7 +8,9 @@
 """CrawlQueue — manages job lifecycle and spawns CrawlWorker tasks."""
 
 import asyncio
+import contextlib
 import logging
+import time
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, cast
@@ -39,28 +41,48 @@ class CrawlQueue:
 
     def __init__(self, settings: Settings) -> None:
         self._settings = settings
-        self._queue: asyncio.Queue[int | None] = asyncio.Queue()
+        self._queue: asyncio.Queue[int | None] = asyncio.Queue(maxsize=settings.queue_limit)
         self._workers: list[CrawlWorker] = []
+        self._scheduler: asyncio.Task[None] | None = None
+        self._last_trigger = 0.0
 
     async def start(self) -> None:
         self._seed_sources()
         self._recover_interrupted_jobs()
-        self._enqueue_all()
-        for i in range(self._settings.workers):
+        if not self._settings.offline and self._settings.workers:
+            self._enqueue_all()
+        for i in range(0 if self._settings.offline else self._settings.workers):
             w = CrawlWorker(self._queue, worker_id=i)
             w.start()
             self._workers.append(w)
+        if self._workers:
+            self._scheduler = asyncio.create_task(self._schedule())
         logger.info("CrawlQueue: started %d workers", self._settings.workers)
 
     async def stop(self) -> None:
-        for _ in self._workers:
-            await self._queue.put(None)
+        if self._scheduler:
+            self._scheduler.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await self._scheduler
         for w in self._workers:
             await w.stop()
+        self._recover_interrupted_jobs()
+        while not self._queue.empty():
+            self._queue.get_nowait()
+            self._queue.task_done()
         logger.info("CrawlQueue: all workers stopped")
 
+    async def _schedule(self) -> None:
+        while True:
+            await asyncio.sleep(self._settings.crawl_interval_hours * 3600)
+            self._enqueue_all()
+
     def enqueue_all(self) -> int:
-        """Public method: re-enqueue all enabled sources. Returns job count."""
+        """Coalesce active work and throttle repeated manual triggers."""
+        now = time.monotonic()
+        if self._settings.offline or not self._settings.workers or now - self._last_trigger < 60:
+            return 0
+        self._last_trigger = now
         return self._enqueue_all()
 
     def _seed_sources(self) -> None:
@@ -121,10 +143,21 @@ class CrawlQueue:
         return recovered
 
     def _enqueue_all(self) -> int:
+        if self._settings.offline or not self._settings.workers:
+            return 0
         count = 0
         with Session(get_engine()) as session:
             sources = session.exec(select(Source).where(Source.enabled == True)).all()  # noqa: E712
+            active = set(
+                session.exec(
+                    select(CrawlJob.source_id).where(
+                        cast(Any, CrawlJob.status).in_(("pending", "running"))
+                    )
+                ).all()
+            )
             for source in sources:
+                if source.id in active or self._queue.full():
+                    continue
                 job = CrawlJob(
                     source_id=source.id or 0,
                     source_name=source.name,
@@ -159,6 +192,7 @@ class CrawlQueue:
                 counts[job.status] += 1
 
         return {
+            "count_scope": "last_100_jobs",
             "queue_size": self._queue.qsize(),
             "workers": len(self._workers),
             **counts,

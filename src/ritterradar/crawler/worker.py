@@ -10,13 +10,14 @@
 import asyncio
 import contextlib
 import logging
+import time
 from datetime import UTC, datetime
 
 from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, func, select
 
 from ritterradar.config import get_settings
-from ritterradar.crawler.base_adapter import MarketData
+from ritterradar.crawler.base_adapter import MarketData, validate_market
 from ritterradar.crawler.http_client import PoliteHttpClient, make_client
 from ritterradar.crawler.registry import get_adapter
 from ritterradar.database.engine import get_engine
@@ -57,18 +58,39 @@ class CrawlWorker:
                     break
                 try:
                     await self._process(job_id, client)
+                except asyncio.CancelledError:
+                    await self._fail(job_id, "Interrupted by application shutdown")
+                    raise
                 except Exception:
-                    logger.exception(
-                        "Worker %d: unhandled error for job %d", self._worker_id, job_id
+                    await self._fail(
+                        job_id, "Unexpected processing failure; inspect local diagnostics"
                     )
+                    logger.error("Worker %d: unhandled error for job %d", self._worker_id, job_id)
                 finally:
                     self._queue.task_done()
 
     async def _process(self, job_id: int, client: PoliteHttpClient) -> None:
+        try:
+            async with asyncio.timeout(get_settings().crawl_timeout_seconds):
+                await self._process_job(job_id, client)
+        except asyncio.CancelledError:
+            await self._fail(job_id, "Interrupted by application shutdown")
+            raise
+        except Exception:
+            await self._fail(job_id, "Processing failed or crawl deadline exceeded")
+            with Session(get_engine()) as session:
+                job = session.get(CrawlJob, job_id)
+                source_id = job.source_id if job else None
+            await self._update_source_error(
+                source_id, "Processing failed or crawl deadline exceeded"
+            )
+
+    async def _process_job(self, job_id: int, client: PoliteHttpClient) -> None:
         settings = get_settings()
         source_name: str = ""
         source_adapter: str = ""
         source_id: int | None = None
+        source_url = ""
 
         with Session(get_engine()) as session:
             job = session.get(CrawlJob, job_id)
@@ -87,6 +109,7 @@ class CrawlWorker:
             source_name = job.source_name
             source_adapter = source.adapter_name
             source_id = source.id
+            source_url = source.base_url
 
             job.status = "running"
             job.started_at = datetime.now(UTC)
@@ -100,11 +123,15 @@ class CrawlWorker:
             await self._fail(job_id, f"Unknown adapter: {source_adapter!r}")
             return
 
+        if not adapter.BASE_URL:
+            adapter.BASE_URL = source_url
+        if isinstance(client, PoliteHttpClient):
+            client = client.for_source(adapter.BASE_URL)
         try:
             markets = await adapter.crawl(client)
         except Exception as exc:
-            await self._fail(job_id, str(exc))
-            await self._update_source_error(source_id, str(exc))
+            await self._fail(job_id, f"Adapter failed: {type(exc).__name__}")
+            await self._update_source_error(source_id, f"Adapter failed: {type(exc).__name__}")
             return
 
         inserted = updated = 0
@@ -113,7 +140,19 @@ class CrawlWorker:
         # crawl, rather than repeating the same failed lookups for every row.
         locations: dict[tuple[str, str | None, str | None, str], GeoResult | None] = {}
 
-        for mdata in markets:
+        rejected = 0
+        deadline = time.monotonic() + settings.crawl_timeout_seconds
+        if len(markets) > settings.max_crawl_records:
+            raise ValueError("Event count exceeds crawl budget")
+        for raw_market in markets:
+            if time.monotonic() > deadline:
+                raise TimeoutError("Crawl budget exceeded")
+            try:
+                mdata = validate_market(raw_market)
+            except (ValueError, TypeError):
+                rejected += 1
+                continue
+            await asyncio.sleep(0)
             if mdata.end_date < mdata.start_date or exclusion_reason(mdata.name, source_name):
                 continue
             lat, lon, uncertain = None, None, False
@@ -144,6 +183,13 @@ class CrawlWorker:
             updated += upd
 
         await self._complete(job_id, len(markets), inserted, updated)
+        if rejected or (isinstance(client, PoliteHttpClient) and client.failures):
+            message = (
+                f"Partial crawl: {rejected} invalid records; upstream requests may have failed"
+            )
+            await self._fail(job_id, message)
+            await self._update_source_error(source_id, message)
+            return
         await self._update_source_success(source_id)
         logger.info(
             "Worker %d: %s done — %d found, %d inserted, %d updated",

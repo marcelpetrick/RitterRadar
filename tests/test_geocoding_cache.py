@@ -11,7 +11,7 @@ from ritterradar.geocoding.nominatim import GeoResult, _blocking_lookup, _matche
 
 def _install_fake_nominatim(monkeypatch, location: object) -> None:
     class FakeNominatim:
-        def __init__(self, *, user_agent: str) -> None:
+        def __init__(self, *, user_agent: str, **kwargs) -> None:
             self.user_agent = user_agent
 
         def geocode(self, query: object, **kwargs: Any) -> object:

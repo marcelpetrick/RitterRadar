@@ -60,7 +60,7 @@ class SpectaculumAdapter(AbstractCrawlerAdapter):
             response.raise_for_status()
         except Exception:
             logger.exception("%s: failed to fetch homepage %s", self.SOURCE_NAME, BASE)
-            return []
+            raise
 
         soup = BeautifulSoup(response.text, "lxml")
 

@@ -98,8 +98,8 @@ async def test_redirect_to_other_domain_is_rejected_as_domain_drift():
 
 
 async def test_make_client_defaults():
-    client = make_client(verify=False)
+    client = make_client()
     async with client:
         assert client.headers["User-Agent"] == http_client._USER_AGENT
         assert client.headers["Accept-Language"].startswith("de-DE")
-        assert client.follow_redirects is True
+        assert client.follow_redirects is False

@@ -39,7 +39,7 @@ def _install_location(monkeypatch, *, display: str, raw: dict[str, Any], importa
     Location.raw = raw  # type: ignore[attr-defined]
 
     class FakeNominatim:
-        def __init__(self, *, user_agent: str) -> None:
+        def __init__(self, *, user_agent: str, **kwargs) -> None:
             pass
 
         def geocode(self, query: object, **kwargs: Any) -> object:
