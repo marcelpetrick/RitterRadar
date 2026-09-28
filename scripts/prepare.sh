@@ -15,6 +15,7 @@
 #   5. Runs the initial database migration
 #   6. Prints a "you're ready" banner with next steps
 set -euo pipefail
+umask 077
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
