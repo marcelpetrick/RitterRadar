@@ -9,16 +9,21 @@ export function dedupeMarkets(markets) {
   for (const market of markets) {
     const match = groups.find(group => areDuplicateMarkets(group.keep, market));
     if (match) {
+      if (!match.sources.some(source => source.url === market.source_url)) {
+        match.sources.push({ name: market.source_name, url: market.source_url });
+      }
       if (isBetterDuplicateCandidate(market, match.keep)) {
         match.keep = market;
       }
       continue;
     }
-    groups.push({ keep: market });
+    groups.push({
+      keep: market,
+      sources: [{ name: market.source_name, url: market.source_url }],
+    });
   }
 
-  const keep = new Set(groups.map(group => group.keep));
-  return markets.filter(market => keep.has(market));
+  return groups.map(group => ({ ...group.keep, source_links: group.sources }));
 }
 
 function areDuplicateMarkets(a, b) {

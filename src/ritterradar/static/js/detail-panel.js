@@ -47,6 +47,13 @@ function renderDetail(market) {
 
   const location = [market.postal_code, market.city].filter(Boolean).join(' ') || '—';
   const distStr  = market.distance_km != null ? `${market.distance_km.toFixed(0)} km` : '—';
+  const sources = Array.isArray(market.source_links) && market.source_links.length
+    ? market.source_links
+    : [{ name: market.source_name, url: market.source_url }];
+  const sourceLinks = sources.map(source => {
+    const url = safeWebUrl(source.url);
+    return url ? `<a class="detail-source-link" href="${esc(url)}" target="_blank" rel="noopener noreferrer">↗ ${esc(source.name || 'Originalseite')}</a>` : '';
+  }).filter(Boolean).join('');
 
   const programSection = market.program_text
     ? `<hr class="detail-divider"/>
@@ -84,8 +91,8 @@ function renderDetail(market) {
       <span class="detail-value">${distStr}</span>
     </div>
     <div class="detail-row">
-      <span class="detail-label">Quelle</span>
-      <span class="detail-value">${esc(market.source_name)}</span>
+      <span class="detail-label">${sources.length === 1 ? 'Quelle' : 'Quellen'}</span>
+      <span class="detail-value">${sources.length === 1 ? esc(sources[0].name) : `${sources.length} Einträge`}</span>
     </div>
 
     ${programSection}
@@ -93,9 +100,7 @@ function renderDetail(market) {
 
     <hr class="detail-divider"/>
     <div class="detail-actions">
-      <a class="detail-source-link" href="${esc(safeWebUrl(market.source_url) || "#")}" target="_blank" rel="noopener noreferrer">
-        ↗ Zur Originalseite
-      </a>
+      ${sourceLinks}
     </div>
     <div class="detail-actions" style="margin-top:0.4rem">
       <button class="btn-ghost" id="btn-hide-market"

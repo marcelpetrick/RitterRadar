@@ -108,6 +108,31 @@ def check_browser(base_url: str) -> None:
                     "Date range must not overlap the event name"
                 )
 
+            # One marker must retain links to every source of the same event.
+            page.evaluate("""async () => {
+                const { dedupeMarkets } = await import('/static/js/market-dedup.js');
+                const base = { start_date: '2026-10-02', end_date: '2026-10-04',
+                    postal_code: '85567', city: 'Grafing', country: 'DE',
+                    latitude: 48, longitude: 11, market_type: 'medieval' };
+                const merged = dedupeMarkets([
+                    { ...base, id: 1, name: 'Mittelaltermarkt Grafing',
+                        source_name: 'Vehi Mercatus',
+                        source_url: 'https://vehi-mercatus.de/marktkalender/' +
+                            'mittelaltermarkt-grafing-2026/' },
+                    { ...base, id: 2, name: 'Mittelaltermarkt Grafing 2026',
+                        source_name: 'Anderer Kalender',
+                        source_url: 'https://example.org/grafing' },
+                ]);
+                if (merged.length !== 1 || merged[0].source_links.length !== 2) {
+                    throw new Error('Duplicate sources were lost');
+                }
+                window.dispatchEvent(new CustomEvent('market-selected', { detail: merged[0] }));
+            }""")
+            expect(page.locator(".detail-source-link")).to_have_count(2)
+            expect(page.locator(".detail-source-link").first).to_have_attribute(
+                "href", "https://vehi-mercatus.de/marktkalender/mittelaltermarkt-grafing-2026/"
+            )
+
             # Stored/geocoder labels must be text, not an HTML execution sink.
             page.evaluate("""async () => {
                 const m = await import('/static/js/map.js');
