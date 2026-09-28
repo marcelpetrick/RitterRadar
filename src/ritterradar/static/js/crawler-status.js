@@ -1,3 +1,4 @@
+import { apiFetch, safeWebUrl } from './security.js';
 /**
  * RitterRadar — Crawler status bar and jobs panel
  * SPDX-License-Identifier: GPL-3.0-or-later
@@ -50,7 +51,7 @@ function renderJobsPanel(jobs) {
 
 async function pollStatus() {
   try {
-    const r = await fetch('/api/crawl/status');
+    const r = await apiFetch('/api/crawl/status');
     if (!r.ok) return;
     const data = await r.json();
 
@@ -86,7 +87,7 @@ async function pollStatus() {
 
   // Geocoding progress
   try {
-    const gr = await fetch('/api/crawl/geo-progress');
+    const gr = await apiFetch('/api/crawl/geo-progress');
     if (gr.ok) {
       const gd = await gr.json();
       const geoEl = document.getElementById('status-geo');
@@ -105,7 +106,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Trigger crawl button
   document.getElementById('btn-trigger-crawl')?.addEventListener('click', async () => {
     try {
-      const r = await fetch('/api/crawl/trigger', { method: 'POST' });
+      const r = await apiFetch('/api/crawl/trigger', { method: 'POST' });
       const data = await r.json();
       appLog('info', `Crawl gestartet: ${data.enqueued ?? 0} Quellen eingereiht`);
     } catch (err) {

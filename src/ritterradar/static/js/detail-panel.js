@@ -1,3 +1,4 @@
+import { apiFetch, safeWebUrl } from './security.js';
 /**
  * RitterRadar — Market detail side panel
  * SPDX-License-Identifier: GPL-3.0-or-later
@@ -92,7 +93,7 @@ function renderDetail(market) {
 
     <hr class="detail-divider"/>
     <div class="detail-actions">
-      <a class="detail-source-link" href="${esc(market.source_url)}" target="_blank" rel="noopener">
+      <a class="detail-source-link" href="${esc(safeWebUrl(market.source_url) || "#")}" target="_blank" rel="noopener noreferrer">
         ↗ Zur Originalseite
       </a>
     </div>
@@ -103,7 +104,7 @@ function renderDetail(market) {
       </button>
       <a class="btn-ghost" style="text-decoration:none"
          href="https://www.openstreetmap.org/search?query=${encodeURIComponent(location)}"
-         target="_blank" rel="noopener">🗺 OSM</a>
+         target="_blank" rel="noopener noreferrer">🗺 OSM</a>
     </div>
   `;
 
@@ -115,7 +116,7 @@ function renderDetail(market) {
     const btn = e.currentTarget;
     const id  = Number(btn.dataset.id);
     try {
-      const r = await fetch(`/api/markets/${id}/hide`, { method: 'POST' });
+      const r = await apiFetch(`/api/markets/${id}/hide`, { method: 'POST' });
       if (r.ok) {
         const { hidden } = await r.json();
         btn.dataset.hidden = hidden;

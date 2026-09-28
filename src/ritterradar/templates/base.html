@@ -4,7 +4,7 @@
   SPDX-License-Identifier: GPL-3.0-or-later
   Copyright (C) 2026 Marcel Petrick <mail@marcelpetrick.it>
 -->
-<html lang="de">
+<html lang="de" data-offline="{{ 'true' if offline else 'false' }}">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -12,12 +12,6 @@
 
   <!-- Leaflet CSS (served locally — no external CDN dependency) -->
   <link rel="stylesheet" href="/static/vendor/leaflet.css?v={{ version }}" />
-
-  <!-- Google Fonts: medieval-inspired headings + readable body -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap"
-        rel="stylesheet" />
 
   <!-- Application styles -->
   <link rel="stylesheet" href="/static/css/ritterradar.css?v={{ version }}" />

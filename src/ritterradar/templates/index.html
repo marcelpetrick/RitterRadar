@@ -26,7 +26,7 @@
       <div class="sidebar-section">
         <h2 class="sidebar-title">⚜ Heimatort</h2>
         <div class="home-input-group">
-          <input id="home-input" type="text" placeholder="PLZ oder Stadt eingeben…"
+          <input maxlength="300" id="home-input" type="text" placeholder="PLZ oder Stadt eingeben…"
                  autocomplete="off" />
           <button id="btn-geocode" class="btn-primary btn-sm btn-full">Suchen</button>
         </div>
@@ -111,6 +111,11 @@
     </aside>
 
   </div><!-- /layout -->
+
+  <aside class="privacy-note">{% if offline %}Offline: keine externen Anfragen.{% else %}
+    Kartenausschnitte werden von OpenStreetMap geladen. Ortssuchen werden an Nominatim gesendet.
+    {% endif %}<button id="clear-home" class="btn-ghost">Heimatort und Suchverlauf löschen</button>
+  </aside>
 
   <!-- ═══════════════════════ CRAWLER STATUS BAR ═══════════════════════ -->
   <footer id="status-bar">

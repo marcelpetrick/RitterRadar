@@ -1,3 +1,4 @@
+import { apiFetch, safeWebUrl } from './security.js';
 /**
  * RitterRadar — Filter controls and market data fetching
  * SPDX-License-Identifier: GPL-3.0-or-later
@@ -62,7 +63,7 @@ let latestFetchId = 0;
 
 async function loadSettings() {
   try {
-    const r = await fetch('/api/settings');
+    const r = await apiFetch('/api/settings');
     if (!r.ok) return;
     const s = await r.json();
     if (s.home_latitude != null) {
@@ -105,9 +106,17 @@ export async function fetchAndRender(silent = false) {
   types.forEach(t => params.append('market_type', t));
 
   try {
-    const r = await fetch(`/api/markets?${params}`);
-    if (!r.ok) { if (!silent) _log('error', `Marktdaten: Serverfehler ${r.status}`); return; }
-    const markets = await r.json();
+    const markets = [];
+    params.set('limit', '2000');
+    for (let offset = 0; offset <= 20000; offset += 2000) {
+      if (fetchId !== latestFetchId) return;
+      params.set('offset', String(offset));
+      const r = await apiFetch(`/api/markets?${params}`);
+      if (!r.ok) { if (!silent) _log('error', `Marktdaten: Serverfehler ${r.status}`); return; }
+      const page = await r.json();
+      markets.push(...page);
+      if (page.length < 2000) break;
+    }
     if (fetchId !== latestFetchId) return;
     const dedupedMarkets = dedupeMarkets(markets);
     renderMarkers(dedupedMarkets);
@@ -132,7 +141,7 @@ async function geocodeHome(query) {
   _log('info', `Ortssuche: „${query}"…`);
 
   try {
-    const r = await fetch(`/api/settings/geocode?q=${encodeURIComponent(query)}`);
+    const r = await apiFetch('/api/settings/geocode', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({q: query})});
     const data = await r.json();
     if (!data.found) {
       statusEl?.classList.add('err');
@@ -145,7 +154,7 @@ async function geocodeHome(query) {
     flyTo(data.latitude, data.longitude);
 
     // Save to settings
-    await fetch('/api/settings', {
+    await apiFetch('/api/settings', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -212,4 +221,9 @@ document.addEventListener('DOMContentLoaded', () => {
   settingsReady.then(() => {
     setInterval(() => fetchAndRender(true), 8_000);
   });
+});
+
+document.getElementById('clear-home')?.addEventListener('click', async () => {
+  const response = await apiFetch('/api/settings/history', {method: 'DELETE'});
+  if (response.ok) window.location.reload();
 });

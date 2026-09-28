@@ -101,6 +101,16 @@ def check_browser(base_url: str) -> None:
                     "Date range must not overlap the event name"
                 )
 
+            # Stored/geocoder labels must be text, not an HTML execution sink.
+            page.evaluate("""async () => {
+                const m = await import('/static/js/map.js');
+                m.setHomePin(51, 10, '<img src=x onerror="window.auditXss=1">');
+            }""")
+            page.locator(".leaflet-marker-icon").last.dispatch_event("mouseover")
+            expect(page.locator(".leaflet-tooltip")).to_contain_text("<img src=x")
+            assert page.evaluate("window.auditXss") is None
+            page.mouse.move(0, 0)
+
             # Distinct events sharing a postcode survive; clearing types shows none.
             for checkbox in page.locator("#type-filters input").all():
                 checkbox.uncheck()

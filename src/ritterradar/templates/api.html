@@ -1,0 +1,6 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>RitterRadar API</title></head>
+<body><h1>RitterRadar API</h1><p><a href="/openapi.json">OpenAPI schema</a> · <a href="/">Map</a></p>
+<p>Mutations require the X-RitterRadar-Request: 1 header. Network deployments require authentication.</p>
+{% for path, methods in schema.paths.items() %}<h2>{{ path }}</h2>
+{% for method, operation in methods.items() %}<h3>{{ method|upper }} — {{ operation.summary }}</h3>
+<p>{{ operation.description }}</p>{% endfor %}{% endfor %}</body></html>

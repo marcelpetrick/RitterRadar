@@ -34,7 +34,7 @@ export function initMap() {
     zoomControl: true,
   });
 
-  L.tileLayer(TILE_URL, {
+  if (document.documentElement.dataset.offline !== 'true') L.tileLayer(TILE_URL, {
     attribution: TILE_ATTRIBUTION,
     maxZoom: 19,
     subdomains: 'abc',
@@ -70,7 +70,7 @@ function createMarker(market) {
 
   const icon = L.divIcon({
     className: '',
-    html: `<div class="rr-marker ${market.market_type}${uncertain ? ' rr-marker-uncertain' : ''}"
+    html: `<div class="rr-marker ${Object.hasOwn(TYPE_COLORS, market.market_type) ? market.market_type : "medieval"}${uncertain ? ' rr-marker-uncertain' : ''}"
                style="background:${color}"></div>`,
     iconSize: [22, 22],
     iconAnchor: [11, 22],
@@ -114,8 +114,10 @@ export function setHomePin(lat, lon, label) {
     iconAnchor: [9, 9],
   });
 
+  const labelElement = document.createElement('span');
+  labelElement.textContent = label || 'Heimatort';
   homeMarker = L.marker([lat, lon], { icon, zIndexOffset: 1000 })
-    .bindTooltip(label || 'Heimatort', { permanent: false });
+    .bindTooltip(labelElement, { permanent: false });
   homeMarker.addTo(map);
 }
 
@@ -140,6 +142,6 @@ try {
   initMap();
 } catch (err) {
   const overlay = document.getElementById('map-loading');
-  if (overlay) overlay.innerHTML = `<p style="color:#cc4444;padding:1rem">Karte konnte nicht initialisiert werden:<br><code>${err}</code></p>`;
+  if (overlay) overlay.textContent = `Karte konnte nicht initialisiert werden: ${err}`;
   console.error('RitterRadar map init failed:', err);
 }
