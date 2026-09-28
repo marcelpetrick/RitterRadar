@@ -8,9 +8,14 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.2.0] — 2026-09-28
+### Added
+- Open a matching market directly from an `/?event=...` link, including a
+  deduplicated listing matched through any of its source URLs.
+
 ### Fixed
-- Center the initial map on the saved home location and allow a direct event
-  link such as `/?event=grafing` to open the matching market immediately.
+- Center the initial map on the saved home location so nearby events are visible
+  without manually panning from the Germany-wide default.
 
 ## [0.1.1] — 2026-09-28
 ### Fixed

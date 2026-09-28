@@ -1,6 +1,6 @@
 # RitterRadar — Architecture
 
-> Updated: 2026-09-28 · documentation target: v0.1.1
+> Updated: 2026-09-28 · documentation target: v0.2.0
 
 RitterRadar is a local-first Python 3.12–3.14 application. FastAPI serves a
 Leaflet map and JSON API, asyncio workers crawl configured event sources, and
