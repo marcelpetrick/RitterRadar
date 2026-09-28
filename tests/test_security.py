@@ -368,12 +368,16 @@ def test_duplicate_jobs_and_cooldown(secure_app):
     with Session(get_engine()) as session:
         session.add(
             Source(
-                name="Only source", base_url="https://source.example", adapter_name="spectaculum"
+                name="Only source",
+                base_url="https://source.example",
+                adapter_name="spectaculum",
+                enabled=True,
             )
         )
         session.commit()
     settings = secure_app[1]
     settings.workers = 1
+    settings.offline = False
     queue = CrawlQueue(settings)
     assert queue.enqueue_all() == 1
     assert queue.enqueue_all() == 0
