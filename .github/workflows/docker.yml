@@ -23,16 +23,23 @@ env:
   IMAGE_NAME: ${{ github.repository }}
   PLATFORMS: linux/amd64,linux/arm64
 
+permissions:
+  contents: read
+
 jobs:
+  quality:
+    uses: ./.github/workflows/ci.yml
+
   image:
+    needs: quality
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: write
-      id-token: write
-      attestations: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+        with:
+          persist-credentials: false
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
@@ -66,14 +73,49 @@ jobs:
 
       - name: Smoke test
         run: |
-          docker run -d --name smoke -e RITTERRADAR_WORKERS=0 -p 127.0.0.1:8000:8000 ritterradar:smoke-test
+          docker run -d --name smoke -e RITTERRADAR_WORKERS=0 -e RITTERRADAR_AUTH_TOKEN=ci-smoke-token-20260928-at-least-32-chars -e RITTERRADAR_OFFLINE=true -p 127.0.0.1:8000:8000 ritterradar:smoke-test
           trap 'docker logs smoke; docker rm -f smoke' EXIT
           curl -fsS --retry 30 --retry-delay 2 --retry-all-errors http://127.0.0.1:8000/health
-          curl -fsS -o index.html http://127.0.0.1:8000/
+          curl -fsS -u ritterradar:ci-smoke-token-20260928-at-least-32-chars -o index.html http://127.0.0.1:8000/
           grep -q "RitterRadar" index.html
-          curl -fsS -o /dev/null http://127.0.0.1:8000/static/css/ritterradar.css
-          curl -fsS -o /dev/null http://127.0.0.1:8000/static/js/market-dedup.js
-          curl -fsS -o /dev/null http://127.0.0.1:8000/api/crawl/status
+          curl -fsS -u ritterradar:ci-smoke-token-20260928-at-least-32-chars -o /dev/null http://127.0.0.1:8000/static/css/ritterradar.css
+          curl -fsS -u ritterradar:ci-smoke-token-20260928-at-least-32-chars -o /dev/null http://127.0.0.1:8000/static/js/market-dedup.js
+          curl -fsS -u ritterradar:ci-smoke-token-20260928-at-least-32-chars -o /dev/null http://127.0.0.1:8000/api/crawl/status
+
+  publish:
+    needs: image
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+        with:
+          persist-credentials: false
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Extract image metadata
+        id: meta
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=pr
+            type=edge,branch=master
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha
+          labels: |
+            org.opencontainers.image.licenses=GPL-3.0-or-later
 
       - name: Log in to GitHub Container Registry
         if: github.event_name != 'pull_request'
