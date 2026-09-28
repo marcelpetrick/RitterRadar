@@ -44,7 +44,7 @@ class CrawlQueue:
         self._queue: asyncio.Queue[int | None] = asyncio.Queue(maxsize=settings.queue_limit)
         self._workers: list[CrawlWorker] = []
         self._scheduler: asyncio.Task[None] | None = None
-        self._last_trigger = 0.0
+        self._last_trigger: float | None = None
 
     async def start(self) -> None:
         self._seed_sources()
@@ -80,7 +80,11 @@ class CrawlQueue:
     def enqueue_all(self) -> int:
         """Coalesce active work and throttle repeated manual triggers."""
         now = time.monotonic()
-        if self._settings.offline or not self._settings.workers or now - self._last_trigger < 60:
+        if (
+            self._settings.offline
+            or not self._settings.workers
+            or (self._last_trigger is not None and now - self._last_trigger < 60)
+        ):
             return 0
         self._last_trigger = now
         return self._enqueue_all()

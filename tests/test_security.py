@@ -363,7 +363,7 @@ def test_invalid_ingested_coordinates_and_urls():
     assert validate_market(MarketData(**values, latitude=0, longitude=0)).latitude == 0
 
 
-def test_duplicate_jobs_and_cooldown(secure_app):
+def test_duplicate_jobs_and_cooldown(secure_app, monkeypatch):
     from ritterradar.database.engine import get_engine
 
     with Session(get_engine()) as session:
@@ -380,8 +380,11 @@ def test_duplicate_jobs_and_cooldown(secure_app):
     settings.workers = 1
     settings.offline = False
     queue = CrawlQueue(settings)
-    assert queue.enqueue_all() == 1
-    assert queue.enqueue_all() == 0
+    # A new runner can have less than 60 seconds of monotonic uptime.
+    with monkeypatch.context() as patch:
+        patch.setattr("ritterradar.crawler.queue.time.monotonic", lambda: 1.0)
+        assert queue.enqueue_all() == 1
+        assert queue.enqueue_all() == 0
     assert queue._enqueue_all() == 0
     with Session(get_engine()) as session:
         assert len(session.exec(select(CrawlJob)).all()) == 1

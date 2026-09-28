@@ -16,6 +16,8 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 ### Fixed
 - Center the initial map on the saved home location so nearby events are visible
   without manually panning from the Germany-wide default.
+- Allow the first manual crawl trigger immediately after a fresh host boot;
+  subsequent triggers still observe the cooldown.
 
 ## [0.1.1] — 2026-09-28
 ### Fixed
