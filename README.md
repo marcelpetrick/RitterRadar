@@ -54,9 +54,8 @@
 
 ## Project status
 
-Release candidate: `0.1.0` — security and reliability hardening. The package
-version is set in `pyproject.toml`; publishing still depends on the release
-checks completing.
+Current release: `0.1.1` — restores OpenStreetMap tile loading after the
+`0.1.0` security hardening. The package version is set in `pyproject.toml`.
 
 | Area | State |
 |---|---|
@@ -152,7 +151,7 @@ Container Registry as
 | Tag | Content |
 |---|---|
 | `latest` | Most recent release |
-| `X.Y.Z` | A specific release (e.g. `0.1.0`) |
+| `X.Y.Z` | A specific release (e.g. `0.1.1`) |
 | `X.Y` | Latest release in that minor series (e.g. `0.1`) |
 | `edge` | Latest build of `master` |
 | `sha-<commit>` | Build of one exact commit |
@@ -238,8 +237,8 @@ To cut a release, update `version` in `pyproject.toml`, add its changelog entry,
 commit and push `master`, then push the matching annotated tag:
 
 ```bash
-git tag -a v0.1.0 -m "RitterRadar 0.1.0"
-git push origin v0.1.0
+git tag -a v0.1.1 -m "RitterRadar 0.1.1"
+git push origin v0.1.1
 ```
 
 `release.yml` publishes the GitHub release only after the checks, container
@@ -404,7 +403,7 @@ from ritterradar.crawler.registry import register
 from bs4 import BeautifulSoup
 from datetime import date
 
-__version__ = "0.1.0"          # bump when parsing logic changes
+__version__ = "0.1.1"          # bump when parsing logic changes
 _VERIFIED_DATE = "YYYY-MM-DD"  # last date you confirmed the page structure
 
 @register("mysite")

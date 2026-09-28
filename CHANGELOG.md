@@ -8,6 +8,14 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.1.1] — 2026-09-28
+### Fixed
+- Restore OpenStreetMap tiles by sending only the application origin as the
+  browser Referer and using the provider's canonical tile hostname. Add an
+  offline browser regression for the outgoing Referer.
+- Keep links to every source when duplicate listings share one map marker, so
+  the Vehi Mercatus listing remains accessible for the Grafing market.
+
 ## [0.1.0] — 2026-09-28
 ### Security
 - Add a Host allowlist, same-origin checks for mutations, and token-based
