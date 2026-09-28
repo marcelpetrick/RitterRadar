@@ -54,7 +54,7 @@
 
 ## Project status
 
-Current version: `0.0.91` — fully functional and actively maintained.
+Current version: `0.0.92` — fully functional and actively maintained.
 
 | Area | State |
 |---|---|

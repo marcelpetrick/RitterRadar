@@ -8,6 +8,12 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.0.92] — 2026-09-27
+### Added
+- `review20260927.md`: security, privacy, reliability, and delivery review with
+  isolated reproductions, audit limitations, and an ordered implementation plan
+  covering 14 findings. Remediation remains pending; this is a review-only change.
+
 ## [0.0.91] — 2026-09-20
 ### Added
 - `scripts/local_pipeline.sh` runs the complete quality gate — lint, formatting,
