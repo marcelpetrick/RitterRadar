@@ -15,9 +15,19 @@ services:
     build: .
     init: true
     restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    pids_limit: 128
+    mem_limit: 512m
+    cpus: 2
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=32m,mode=1777
     ports:
       - "127.0.0.1:${RITTERRADAR_PUBLISH_PORT:-8000}:8000"
     environment:
+      RITTERRADAR_AUTH_TOKEN: ${RITTERRADAR_AUTH_TOKEN:?Set a random token for container access}
+      RITTERRADAR_ALLOWED_HOSTS: ${RITTERRADAR_ALLOWED_HOSTS:-["127.0.0.1","localhost"]}
       RITTERRADAR_GEOCODER_EMAIL: ${RITTERRADAR_GEOCODER_EMAIL:-ritterradar@localhost}
       RITTERRADAR_WORKERS: ${RITTERRADAR_WORKERS:-3}
       RITTERRADAR_LOG_LEVEL: ${RITTERRADAR_LOG_LEVEL:-INFO}

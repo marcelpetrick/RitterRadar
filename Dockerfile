@@ -5,9 +5,10 @@
 # RitterRadar container image.
 #
 # Build:  docker build -t ritterradar .
-# Run:    docker run --rm -p 127.0.0.1:8000:8000 -v ritterradar-data:/app/data ritterradar
+# Run:    docker run --rm -e RITTERRADAR_AUTH_TOKEN=<random-32+-character-token> \
+#           -p 127.0.0.1:8000:8000 -v ritterradar-data:/app/data ritterradar
 
-ARG PYTHON_IMAGE=python:3.14.7-slim-trixie
+ARG PYTHON_IMAGE=python:3.14.7-slim-trixie@sha256:cad9a2c871761c413caa6fdd6441c783451e740a48aaeba60ae62a8b53525ef6
 
 # ── Stage 1: build the virtual environment ───────────────────────────
 FROM ${PYTHON_IMAGE} AS builder
@@ -22,9 +23,8 @@ RUN python -m venv /opt/venv
 # Install the pinned runtime dependencies first so this layer stays cached
 # as long as pyproject.toml is unchanged.
 COPY pyproject.toml ./
-RUN python -c "import tomllib; print('\n'.join(tomllib.load(open('pyproject.toml', 'rb'))['project']['dependencies']))" \
-        > requirements.txt \
-    && /opt/venv/bin/pip install --only-binary=:all: -r requirements.txt
+COPY requirements/runtime.txt ./requirements.txt
+RUN /opt/venv/bin/pip install --only-binary=:all: -r requirements.txt
 
 COPY README.md LICENSE ./
 COPY src ./src
@@ -56,7 +56,7 @@ COPY --from=builder /opt/venv /opt/venv
 COPY config ./config
 COPY alembic.ini ./
 COPY alembic ./alembic
-RUN mkdir -p /app/data && chown ritter:ritter /app/data
+RUN mkdir -p /app/data && chown ritter:ritter /app/data && chmod 700 /app/data
 
 USER 10001:10001
 VOLUME ["/app/data"]
