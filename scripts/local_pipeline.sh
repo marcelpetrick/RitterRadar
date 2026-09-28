@@ -10,7 +10,7 @@
 #   1. ruff check          lint
 #   2. ruff format --check formatting
 #   3. mypy src            strict type check
-#   4. pytest              offline suite, fails below 90 % coverage
+#   4. pytest              offline suite, fails below 98 % coverage
 #   5. browser_test.py     offline Playwright regression run (optional)
 #   6. sphinx-build        documentation build (optional)
 #
@@ -82,7 +82,7 @@ if [[ "$RUN_DOCS" -eq 0 ]]; then
 elif ! command -v sphinx-build >/dev/null 2>&1; then
     skip_stage "Documentation" "sphinx-build missing: pip install -e '.[dev]'"
 else
-    run_stage "Documentation" sphinx-build -q docs/source docs/_build/html
+    run_stage "Documentation" sphinx-build -W --keep-going -q docs/source docs/_build/html
 fi
 
 echo

@@ -16,9 +16,9 @@ Format: severity-rated findings from periodic review passes.
 | R1-003 | HIGH | `crawler/worker.py` | Cross-source duplicate markets — same event inserted 3× from different sources (1971 rows → 1859 after cleanup) | **Fixed** v0.0.32 — three-phase upsert dedup (PLZ → city → source_url) |
 | R1-004 | HIGH | `taterman_at.py` | `_coerce_date` returned `datetime` not `date` — `isinstance(datetime, date)` is True (datetime subclasses date) | **Fixed** v0.0.34 — check for callable `.date()` method first |
 | R1-005 | HIGH | `taterman_at.py` | All-day detection failed for non-standard `DTSTART;TZID=...;VALUE=DATE` (RFC 5545 violation by site) — icalendar returns timezone-aware `datetime` instead of `date` | **Fixed** v0.0.34 — detect all-day via `dtstart.params.get("VALUE") == "DATE"` |
-| R1-006 | MEDIUM | `api/markets.py` | No pagination on `/api/markets` — returns all matching records at once; at 2000+ markets this may be slow | **Open** — acceptable at SQLite scale; add `limit`/`offset` params if latency grows |
+| R1-006 | MEDIUM | `api/markets.py` | No pagination on `/api/markets` — returns all matching records at once; at 2000+ markets this may be slow | **Fixed** v0.1.0 — bounded `limit`/`offset` responses |
 | R1-007 | MEDIUM | Frontend | No "set home on map" click-to-pin interaction — text geocode is the only input method | **Open / Deferred** — text input + Nominatim geocode covers 95% of use cases |
-| R1-008 | MEDIUM | `crawler/adapters/` | Adapter integration tests use no HTML fixtures — only API-level tests exist; a site redesign would break adapters silently | **Open** — fixture-based adapter tests planned for next test pass |
+| R1-008 | MEDIUM | `crawler/adapters/` | Adapter integration tests use no HTML fixtures — only API-level tests exist; a site redesign would break adapters silently | **Fixed** — fixture-based adapter tests are present |
 | R1-009 | LOW | `api/main.py` | FastAPI `version` field was hardcoded to `"0.0.12"` — stale after every commit | **Fixed** v0.0.37 — reads from `importlib.metadata.version("ritterradar")` |
 | R1-010 | LOW | Frontend | Leaflet "Leaflet" branding prefix in attribution bar cluttered the map corner | **Fixed** v0.0.36 — `attributionControl.setPrefix('')`; OSM credit retained |
 | R1-011 | LOW | `vehi_mercatus.py` | `href` ternary was over 100 chars and used unused `datetime` import | **Fixed** v0.0.34 — E501 unwrapped, F401 removed |
@@ -30,7 +30,7 @@ Format: severity-rated findings from periodic review passes.
 
 | ID | Severity | Component | Finding | Status |
 |---|---|---|---|---|
-| R2-001 | MEDIUM | `pyproject.toml` | Coverage threshold set to 80%; vision document specifies 90% goal | **Open** — adapter fixture tests needed to close the gap |
+| R2-001 | MEDIUM | `pyproject.toml` | Coverage threshold set to 80%; vision document specifies 90% goal | **Fixed** — pytest enforces 98% coverage |
 | R2-002 | LOW | `documents/02_issues.md` | File contained raw uvicorn log output instead of structured findings | **Fixed** 2026-06-26 — replaced with this document |
 | R2-003 | LOW | Slider UX | Umkreis slider capped at 500 km — unusable for Austria/Switzerland events | **Fixed** v0.0.36 — range extended to 0–1024 km, step 8 |
 | R2-004 | LOW | Sidebar UX | "Suchen" button was next to the Heimatort input field (side-by-side); visually displaced | **Fixed** v0.0.36 — button moved below input (`flex-direction: column`) |
@@ -44,9 +44,25 @@ Format: severity-rated findings from periodic review passes.
 
 | ID | Severity | Component | Finding |
 |---|---|---|---|
-| R1-006 | MEDIUM | `api/markets.py` | No pagination on `/api/markets` |
-| R1-007 | MEDIUM | Frontend | No "set home on map" click-to-pin |
-| R1-008 | MEDIUM | `tests/` | Adapter-level HTML fixture tests not written |
-| R2-001 | MEDIUM | `pyproject.toml` | Coverage at 80%; goal is 90% |
-| — | LOW | `crawler/worker.py` | `original_text` from scraped HTML is stored raw; no HTML sanitisation |
-| — | LOW | `crawler/http_client.py` | SSRF guard is domain-drift only; no explicit allowlist |
+| R1-007 | MEDIUM | Frontend | No "set home on map" click-to-pin; text geocoding remains available |
+
+R1-006 was resolved by bounded pagination in v0.1.0. R1-008 is resolved by
+the adapter fixture suite. R2-001 is resolved: pytest coverage is gated at
+98%. The two security entries formerly listed here are tracked in the dated
+security review below; safe outbound destination checks and text rendering have
+been added.
+
+## Security review remediation — 2026-09-28
+
+The 14 findings from [`review20260927.md`](../review20260927.md) have
+implemented controls for browser/API trust, crawler destinations, bounded work,
+validation, failure reporting, privacy, and process ownership. Runtime and
+development dependency audits now report no known vulnerabilities, and Bandit
+passes. Remaining assurance work includes hash-verified artifact locks, fresh
+installs across Python 3.12–3.14, a container build/smoke run (the latest
+attempt could not access the Docker socket), and hosted workflow
+confirmation. Do not treat the review as fully closed until release checks
+complete.
+
+The 2026-09-27 tracker entries above are historical review passes. This section
+is the current security and reliability status.
