@@ -19,7 +19,7 @@
 <!-- quality gate and project health -->
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://docs.astral.sh/ruff/)
 [![mypy: strict](https://img.shields.io/badge/mypy-strict-2a6db2?logo=python&logoColor=white)](pyproject.toml)
-[![Coverage gate: 90%](https://img.shields.io/badge/coverage%20gate-%E2%89%A590%25-brightgreen)](pyproject.toml)
+[![Coverage gate: 98%](https://img.shields.io/badge/coverage%20gate-%E2%89%A598%25-brightgreen)](pyproject.toml)
 [![Adapters: 9 live sources](https://img.shields.io/badge/adapters-9%20live%20sources-556b2f)](config/sources.yaml)
 [![Last commit](https://img.shields.io/github/last-commit/marcelpetrick/RitterRadar/master?color=6b4f1d)](https://github.com/marcelpetrick/RitterRadar/commits/master)
 
@@ -35,7 +35,7 @@
 >
 > *Upon thine own machine it doth render a most beautiful interactive map, whereupon thou mayest **filter by period** (which months thou wishest to survey) and **filter by space** (thy home position and a radius of thy choosing, from a stone's throw to 1024 leagues). Click upon any marker to learn the full particulars. The crawler runneth in the background; the map refresheth on its own accord.*
 >
-> *No account is required. Thy settings and event treasury remain local; external services provide event pages, geocoding and map tiles. Thus: a helper tool that crawleth the web with custom crawlers, presenteth the findings, and alloweth thee to sift them by time and by distance.*
+> *RitterRadar has no hosted account service. Settings and the event treasury remain on this machine. When enabled, external services provide event pages, geocoding and map tiles. Network access to the application itself requires a configured token.*
 
 ---
 
@@ -54,14 +54,16 @@
 
 ## Project status
 
-Current version: `0.0.92` — fully functional and actively maintained.
+Release candidate: `0.1.0` — security and reliability hardening. The package
+version is set in `pyproject.toml`; publishing still depends on the release
+checks completing.
 
 | Area | State |
 |---|---|
 | **Crawling** | 9 live adapters (HTML, WordPress REST, iCal), polite client with backoff and per-adapter failure isolation |
 | **Data** | SQLite via SQLModel, Alembic migrations, three-phase deduplication, cached Nominatim geocoding |
 | **Interface** | Leaflet map, month/radius/type filters, upcoming-events preview, detail panel, live crawler log |
-| **Quality** | ruff, mypy strict, offline pytest suite with a 90 % coverage gate, offline Playwright regression run |
+| **Quality** | ruff, mypy strict, offline pytest suite with a 98 % coverage gate, offline Playwright regression run |
 | **Delivery** | Multi-arch container on GHCR with SBOM and provenance, GitHub release with wheel and sdist |
 | **Development** | Continues through fixes, source maintenance and scoped extensions — no core feature is missing |
 
@@ -70,8 +72,9 @@ Current version: `0.0.92` — fully functional and actively maintained.
 The version is `MAJOR.MINOR.PATCH` and `version` in
 [`pyproject.toml`](pyproject.toml) is its single source of truth;
 `src/ritterradar/__init__.py` reads it back through `importlib.metadata`, and the
-web UI shows it in the header. Every commit raises the `PATCH` number unless a
-change deliberately calls for a `MINOR` or `MAJOR` bump. A public release exists
+web UI shows it in the header. Compatible fixes raise `PATCH`; additions raise
+`MINOR`; incompatible API, configuration or deployment changes raise `MAJOR`
+(with `0.y.z` releases still under initial development). A public release exists
 only where a `vX.Y.Z` tag matches that version and
 [`CHANGELOG.md`](CHANGELOG.md) documents it — see
 [Publishing pipeline](#publishing-pipeline).
@@ -104,7 +107,7 @@ only where a `vX.Y.Z` tag matches that version and
 ## Requirements
 
 - **Python 3.12+** (tested on 3.12, 3.13 and 3.14) and **pip** — *or* just **Docker** (see [Docker](#docker))
-- **Internet access** for map tiles and initial crawling
+- **Internet access** for map tiles, crawling and geocoding; optional in offline mode
 
 ---
 
@@ -119,7 +122,7 @@ cd RitterRadar
 
 # 2. Copy and edit the environment file
 cp .env.example .env
-# Set RITTERRADAR_GEOCODER_EMAIL to your e-mail address
+# Set RITTERRADAR_GEOCODER_EMAIL to your e-mail address (optional)
 
 # 3. Run the setup script (creates .venv/, installs deps, migrates DB)
 bash scripts/prepare.sh
@@ -149,44 +152,60 @@ Container Registry as
 | Tag | Content |
 |---|---|
 | `latest` | Most recent release |
-| `X.Y.Z` | A specific release (e.g. `0.0.91`) |
-| `X.Y` | Latest release in that minor series (e.g. `0.0`) |
+| `X.Y.Z` | A specific release (e.g. `0.1.0`) |
+| `X.Y` | Latest release in that minor series (e.g. `0.1`) |
 | `edge` | Latest build of `master` |
 | `sha-<commit>` | Build of one exact commit |
 
 ### Run the published image
 
+Generate a random token of at least 32 characters in your password manager and
+keep it there. Set the value in your shell before starting the container:
+
 ```bash
+export RITTERRADAR_AUTH_TOKEN='paste-the-generated-token-here'
 docker run -d --name ritterradar \
   -p 127.0.0.1:8000:8000 \
   -v ritterradar-data:/app/data \
+  -e RITTERRADAR_AUTH_TOKEN \
   -e RITTERRADAR_GEOCODER_EMAIL=your@email.example \
   ghcr.io/marcelpetrick/ritterradar:latest
 ```
 
-Then open **http://127.0.0.1:8000**. Stop with `docker stop ritterradar`;
+Then open **http://127.0.0.1:8000** and enter username `ritterradar` plus the
+token as the password. Stop with `docker stop ritterradar`;
 the database survives in the `ritterradar-data` volume.
 
 ### Docker Compose
 
 ```bash
+export RITTERRADAR_AUTH_TOKEN='paste-the-generated-token-here'
 docker compose up -d                                 # published image
 docker compose up -d --build                         # build from this checkout
 RITTERRADAR_PUBLISH_PORT=13370 docker compose up -d  # different host port
 ```
 
-`compose.yaml` passes only `RITTERRADAR_GEOCODER_EMAIL`, `RITTERRADAR_WORKERS`,
-`RITTERRADAR_LOG_LEVEL` and `RITTERRADAR_CRAWL_INTERVAL_HOURS` into the
-container (values are taken from your shell or `.env`), so a native
-`RITTERRADAR_HOST=127.0.0.1` does not leak in and break binding.
+Compose requires `RITTERRADAR_AUTH_TOKEN` in your shell or `.env`; generate a
+random value of at least 32 characters in your password manager. The
+published port binds to 127.0.0.1 by default. Requests use HTTP Basic
+authentication (`ritterradar` as the username and the token as the password) or
+a Bearer token. For a custom hostname, add it to `RITTERRADAR_ALLOWED_HOSTS` as
+a JSON list. Compose passes
+only its explicitly listed settings into the container, so a native
+`RITTERRADAR_HOST=127.0.0.1` does not change the container's internal bind.
 
 ### Build the image yourself
 
 ```bash
-docker build -t ritterradar:local .     # or: just docker-build
+export RITTERRADAR_AUTH_TOKEN='paste-the-generated-token-here'
+docker build -t ritterradar:local .
 docker run --rm -p 127.0.0.1:8000:8000 \
-  -v ritterradar-data:/app/data ritterradar:local   # or: just docker-run
+  -e RITTERRADAR_AUTH_TOKEN \
+  -v ritterradar-data:/app/data ritterradar:local
 ```
+
+To use `just docker-run`, first set `RITTERRADAR_AUTH_TOKEN` in the shell or
+`.env` to a value of at least 32 characters.
 
 ### Image details
 
@@ -215,12 +234,12 @@ changelog entry before those checks run. Docker builds and smoke-tests `/health`
 | Push to `master` | `:edge`, `:sha-<commit>` |
 | Tag `vX.Y.Z` | Quality checks → Docker publication → wheel/sdist build → public GitHub release |
 
-To cut a release, bump `version` in `pyproject.toml`, add its changelog entry,
-commit and push `master`, then push the matching tag:
+To cut a release, update `version` in `pyproject.toml`, add its changelog entry,
+commit and push `master`, then push the matching annotated tag:
 
 ```bash
-git tag -a v0.0.91 -m "RitterRadar 0.0.91"
-git push origin v0.0.91
+git tag -a v0.1.0 -m "RitterRadar 0.1.0"
+git push origin v0.1.0
 ```
 
 `release.yml` publishes the GitHub release only after the checks, container
@@ -245,13 +264,32 @@ Key settings:
 | `RITTERRADAR_DB_PATH` | `data/ritterradar.db` | SQLite database file path |
 | `RITTERRADAR_SOURCES_FILE` | `config/sources.yaml` | Crawl source list |
 | `RITTERRADAR_WORKERS` | `3` | Parallel crawler workers |
-| `RITTERRADAR_GEOCODER_EMAIL` | *(empty)* | Your email for Nominatim user-agent (required by ToS) |
+| `RITTERRADAR_GEOCODER_EMAIL` | `ritterradar@localhost` | Contact in the Nominatim user-agent; set a valid address for geocoding |
 | `RITTERRADAR_HOST` | `127.0.0.1` | Bind address |
 | `RITTERRADAR_PORT` | `8000` | HTTP port |
 | `RITTERRADAR_LOG_LEVEL` | `INFO` | Log level |
+| `RITTERRADAR_AUTH_TOKEN` | unset | Optional on native loopback; required for network clients and Compose; at least 32 characters |
+| `RITTERRADAR_ALLOWED_HOSTS` | `127.0.0.1`, `localhost`, `::1` | JSON list of accepted Host names; include any custom deployment host |
+| `RITTERRADAR_OFFLINE` | `false` | Disable outbound crawling/geocoding and external map tiles |
+| `RITTERRADAR_REQUEST_LIMIT` | `120` | Per-process request budget per 10 seconds |
+| `RITTERRADAR_REQUEST_CONCURRENCY` | `16` | Maximum concurrent HTTP requests |
+| `RITTERRADAR_MAX_RESPONSE_BYTES` | `8000000` | Maximum bytes accepted per upstream response |
+| `RITTERRADAR_MAX_CRAWL_RECORDS` | `10000` | Maximum records accepted per crawl |
+| `RITTERRADAR_CRAWL_TIMEOUT_SECONDS` | `900` | Maximum duration for one crawl |
+| `RITTERRADAR_MAX_CRAWL_PAGES` | `50` | Maximum pages fetched per crawl |
+| `RITTERRADAR_QUEUE_LIMIT` | `32` | Maximum queued crawl jobs |
+| `RITTERRADAR_CACHE_DAYS` | `30` | Retention window for geocoding cache entries |
 
-> **Set your Nominatim email** — the OpenStreetMap geocoder requires a valid
-> contact in the User-Agent.  Without it geocoding may be rate-limited.
+The app defaults to loopback and accepts only configured Host values. Requests
+from non-loopback clients require `RITTERRADAR_AUTH_TOKEN`; the token is never
+embedded into the page. Mutating browser requests also require the same-origin
+request marker. Use HTTPS when exposing the service beyond a trusted local
+machine. The app applies request limits and security response headers.
+
+The default map uses OpenStreetMap tiles; home-location geocoding sends the
+entered place to Nominatim, and crawling contacts the configured event sources.
+Set `RITTERRADAR_OFFLINE=true` to disable crawling and geocoding and remove the
+external tile host from the page policy. Existing map tiles may then be blank.
 
 ---
 
@@ -279,7 +317,12 @@ The app:
 1. Creates `data/ritterradar.db` automatically on first start
 2. Seeds all sources from `config/sources.yaml`
 3. Starts background crawler workers
-4. Opens a beautiful medieval-themed map
+4. Serves the medieval-themed map at the printed local URL
+
+`/health` is a liveness endpoint; `/ready` reports whether the app is ready.
+SQLite, log and lock files are created with restrictive permissions. Only one
+instance can own a database at a time. The configured crawl interval schedules
+re-crawls while the process is running.
 
 ---
 
@@ -321,8 +364,8 @@ bash scripts/crawl_status.sh
 ### Via API
 
 ```bash
-# Trigger
-curl -X POST http://127.0.0.1:8000/api/crawl/trigger
+# Trigger (mutation requests require the custom request header)
+curl -X POST -H 'X-RitterRadar-Request: 1' http://127.0.0.1:8000/api/crawl/trigger
 
 # Status
 curl http://127.0.0.1:8000/api/crawl/status | python3 -m json.tool
@@ -444,7 +487,7 @@ pip install -e ".[dev]"
 ### Run tests
 
 ```bash
-pytest                       # with coverage report; fails below 90 % coverage
+pytest                       # with coverage report; fails below 98 % coverage
 pytest --no-cov -x -q       # fast, stop on first failure
 ```
 
@@ -513,7 +556,7 @@ Documentation       : PASS
 ```
 
 The gate requires zero ruff findings, unchanged ruff formatting, a clean strict
-`mypy` run over `src`, the offline pytest suite at ≥ 90 % coverage, and the
+`mypy` run over `src`, the offline pytest suite at ≥ 98 % coverage, and the
 offline browser regression run; the Sphinx build follows. Stages whose optional
 tools are missing are reported as `SKIP` instead of silently passing. CI runs the
 same checks on Python 3.12, 3.13 and 3.14, with the browser stage on 3.14.
@@ -553,22 +596,27 @@ open docs/_build/html/index.html
 
 ## API Reference
 
-Interactive docs available at **http://127.0.0.1:8000/api/docs** (Swagger UI)
-and **http://127.0.0.1:8000/api/redoc** (ReDoc) when the app is running.
+The local API guide is available at **http://127.0.0.1:8000/api/docs** and
+**http://127.0.0.1:8000/api/redoc**; neither route loads the interactive
+Swagger/ReDoc consoles. If a token is configured, authenticate with HTTP Basic
+(`ritterradar` / token) or a Bearer token. Scripts use
+`scripts/api_client.py` to pass credentials and the required mutation header
+safely.
 
 Key endpoints:
 
 | Method | Path | Description |
 |---|---|---|
-| `GET` | `/api/markets` | List markets with optional filters |
+| `GET` | `/api/markets?limit=2000&offset=0` | List up to 2,000 markets per page (maximum 20,000 offset) |
 | `POST` | `/api/markets/{id}/hide` | Toggle market visibility |
 | `GET` | `/api/sources` | List configured crawl sources |
 | `GET` | `/api/crawl/status` | Crawler queue state + recent jobs |
 | `POST` | `/api/crawl/trigger` | Enqueue all enabled sources now |
 | `GET` | `/api/settings` | Get user settings (home location, etc.) |
 | `PUT` | `/api/settings` | Update user settings |
-| `GET` | `/api/settings/geocode?q=…` | Geocode an address |
+| `POST` | `/api/settings/geocode` | Geocode an address from a JSON body |
 | `GET` | `/health` | Liveness check |
+| `GET` | `/ready` | Readiness check |
 
 ---
 

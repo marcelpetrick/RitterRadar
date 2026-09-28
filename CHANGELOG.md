@@ -8,6 +8,42 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.1.0] — 2026-09-28
+### Security
+- Add a Host allowlist, same-origin checks for mutations, and token-based
+  authentication for non-loopback clients. Add CSP and browser security headers.
+- Prevent stored home labels from being interpreted as HTML, validate event
+  links, and remove third-party font requests.
+- Validate crawler destinations before connections, pin approved DNS results,
+  restrict redirect targets, and bound response sizes and crawl duration.
+- Bound API and queue work; validate settings and adapter records; make crawl
+  failures visible and ensure job cleanup.
+- Store runtime data and logs with restrictive permissions, redact request
+  query strings from access logs, and add log rotation and privacy clearing.
+
+### Changed
+- Require an authentication token for container deployments and harden the
+  container with a read-only filesystem, dropped capabilities, and resource
+  limits.
+- Add readiness reporting, single-database-instance ownership, periodic
+  crawling, offline mode, and paginated market responses.
+- Move geocoding to a bounded JSON POST request; replace interactive Swagger
+  and ReDoc consoles with a local API guide at the same routes.
+- Add runtime and development dependency inventories, CI security scan steps,
+  documentation to the quality gate, and separate container build and publish
+  jobs.
+- Update `soupsieve` to 2.9.0 after the dependency audit flagged 2.8.4;
+  local runtime/development `pip-audit` and Bandit checks now pass.
+- Document the behavior changes, privacy boundaries, configuration, and the
+  review's remaining verification limits.
+- Raise the enforced line-coverage gate to 98% and add offline API, security,
+  crawler, and network failure-path regressions (319 tests; 98.65% coverage).
+
+### Compatibility
+- API clients that geocode addresses must use `POST /api/settings/geocode`.
+- Container users must set `RITTERRADAR_AUTH_TOKEN`. Clients connecting from
+  another machine need credentials and an explicit allowed Host.
+
 ## [0.0.92] — 2026-09-27
 ### Added
 - `review20260927.md`: security, privacy, reliability, and delivery review with
