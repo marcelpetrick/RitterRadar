@@ -340,6 +340,7 @@ re-crawls while the process is running.
 | Hover a type checkbox or legend item | Shows tooltip with category meaning and data sources |
 | Click **Karte aktualisieren** | Re-applies all filters |
 | Expand **Nächste Märkte** | Shows every event matching the current map filters in chronological order |
+| Open `/?event=grafing` | Opens the first matching event in the current filters and centers its marker |
 | Click **Kopieren** in the event list | Copies the complete filtered list with dates, locations, and distances as plain text |
 | **Hover** a marker | Shows name and date range |
 | **Click** a marker | Opens detail panel on the right |

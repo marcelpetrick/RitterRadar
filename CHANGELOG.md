@@ -8,6 +8,10 @@ Versioning follows [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+- Center the initial map on the saved home location and allow a direct event
+  link such as `/?event=grafing` to open the matching market immediately.
+
 ## [0.1.1] — 2026-09-28
 ### Fixed
 - Restore OpenStreetMap tiles by sending only the application origin as the

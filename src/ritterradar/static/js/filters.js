@@ -60,6 +60,8 @@ function getFilters() {
 let homeCoords = { lat: null, lon: null };
 let settingsReady = Promise.resolve();
 let latestFetchId = 0;
+const requestedEvent = new URLSearchParams(window.location.search).get('event')?.trim().toLowerCase();
+let pendingEvent = requestedEvent || null;
 
 async function loadSettings() {
   try {
@@ -69,6 +71,7 @@ async function loadSettings() {
     if (s.home_latitude != null) {
       homeCoords = { lat: s.home_latitude, lon: s.home_longitude };
       setHomePin(s.home_latitude, s.home_longitude, s.home_label);
+      if (!pendingEvent) flyTo(s.home_latitude, s.home_longitude);
       document.getElementById('home-input').value = s.home_label || '';
     }
     const radiusEl = document.getElementById('radius-slider');
@@ -121,6 +124,18 @@ export async function fetchAndRender(silent = false) {
     const dedupedMarkets = dedupeMarkets(markets);
     renderMarkers(dedupedMarkets);
     updateEventsPreview(dedupedMarkets);
+    if (pendingEvent) {
+      const selected = dedupedMarkets.find(market => [
+        market.name, market.city, ...(market.source_links || []).map(source => source.url),
+      ].some(value => String(value || '').toLowerCase().includes(pendingEvent)));
+      if (selected) {
+        pendingEvent = null;
+        if (selected.latitude != null && selected.longitude != null) {
+          flyTo(selected.latitude, selected.longitude, 11);
+        }
+        window.dispatchEvent(new CustomEvent('market-selected', { detail: selected }));
+      }
+    }
     if (!silent) {
       const hiddenDuplicates = markets.length - dedupedMarkets.length;
       const suffix = hiddenDuplicates ? `, ${hiddenDuplicates} Duplikate ausgeblendet` : '';

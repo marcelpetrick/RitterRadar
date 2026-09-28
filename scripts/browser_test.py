@@ -157,6 +157,11 @@ def check_browser(base_url: str) -> None:
             page.locator("#month-from").select_option("2026-10")
             page.locator("#btn-apply").click()
             expect(page.locator("#preview-count")).to_have_text("0")
+
+            # A source-event link opens its deduplicated listing directly.
+            page.goto(base_url + "/?event=wikingerfest", wait_until="domcontentloaded")
+            expect(page.locator("#detail-panel")).to_be_visible()
+            expect(page.locator("#detail-panel")).to_contain_text("Wikingerfest am See")
             assert not errors, errors
         finally:
             browser.close()
