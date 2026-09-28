@@ -130,7 +130,8 @@ def test_request_budgets_and_headers(secure_app):
     assert c.get("/probe?" + "q" * 4097).status_code == 414
     r = c.get("/probe")
     assert r.headers["x-frame-options"] == "DENY"
-    assert r.headers["referrer-policy"] == "no-referrer"
+    assert r.headers["referrer-policy"] == "strict-origin-when-cross-origin"
+    assert "https://tile.openstreetmap.org" in r.headers["content-security-policy"]
     assert "frame-ancestors 'none'" in r.headers["content-security-policy"]
     settings.offline = True
     assert "openstreetmap" not in c.get("/probe").headers["content-security-policy"]

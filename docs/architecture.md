@@ -29,7 +29,9 @@ or cross-site Fetch Metadata. Use HTTPS when a trusted reverse proxy exposes the
 service beyond the local machine; configure its public Host explicitly.
 
 The browser loads OSM tiles directly; tile traffic does not pass through
-RitterRadar. Geocoding sends the entered place to Nominatim. Crawling fetches
+RitterRadar. Its referrer policy sends only the application origin to the tile
+server, never page paths or query values. Geocoding sends the entered place to
+Nominatim. Crawling fetches
 pages from the hosts configured for each source. `RITTERRADAR_OFFLINE=true`
 disables crawling and geocoding and removes the tile host from the page's CSP.
 

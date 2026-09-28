@@ -21,13 +21,13 @@ REQUEST_HEADER = "x-ritterradar-request"
 SECURITY_HEADERS = {
     "content-security-policy": (
         "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; "
-        "img-src 'self' data: https://*.tile.openstreetmap.org; connect-src 'self'; "
+        "img-src 'self' data: https://tile.openstreetmap.org; connect-src 'self'; "
         "font-src 'self'; frame-ancestors 'none'; object-src 'none'; base-uri 'none'; "
         "form-action 'self'"
     ),
     "x-frame-options": "DENY",
     "x-content-type-options": "nosniff",
-    "referrer-policy": "no-referrer",
+    "referrer-policy": "strict-origin-when-cross-origin",
     "permissions-policy": "camera=(), microphone=(), geolocation=()",
     "cache-control": "no-store",
 }
@@ -96,7 +96,7 @@ class SecurityMiddleware:
                 if settings.offline:
                     additions["content-security-policy"] = additions[
                         "content-security-policy"
-                    ].replace(" https://*.tile.openstreetmap.org", "")
+                    ].replace(" https://tile.openstreetmap.org", "")
                 message["headers"] = [
                     (k, v)
                     for k, v in message.get("headers", [])

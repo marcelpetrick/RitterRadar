@@ -8,7 +8,7 @@ function _log(level, msg) {
 }
 
 // Tile layer: OpenStreetMap standard tiles
-const TILE_URL = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+const TILE_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
 const TILE_ATTRIBUTION =
   '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
@@ -37,7 +37,6 @@ export function initMap() {
   if (document.documentElement.dataset.offline !== 'true') L.tileLayer(TILE_URL, {
     attribution: TILE_ATTRIBUTION,
     maxZoom: 19,
-    subdomains: 'abc',
   }).addTo(map);
 
   markersLayer = L.layerGroup().addTo(map);

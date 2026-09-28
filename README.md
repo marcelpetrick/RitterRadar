@@ -288,6 +288,9 @@ machine. The app applies request limits and security response headers.
 
 The default map uses OpenStreetMap tiles; home-location geocoding sends the
 entered place to Nominatim, and crawling contacts the configured event sources.
+Tile requests send only the application's origin as the browser Referer, as
+required by OpenStreetMap; page paths, queries, and home coordinates are not
+included.
 Set `RITTERRADAR_OFFLINE=true` to disable crawling and geocoding and remove the
 external tile host from the page policy. Existing map tiles may then be blank.
 

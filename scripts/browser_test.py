@@ -74,14 +74,20 @@ def check_browser(base_url: str) -> None:
         try:
             page = browser.new_page()
             errors = []
+            tile_referrers = []
             page.on("pageerror", lambda error: errors.append(str(error)))
+
+            def route_request(route):
+                if route.request.url.startswith(base_url + "/"):
+                    route.continue_()
+                    return
+                if route.request.url.startswith("https://tile.openstreetmap.org/"):
+                    tile_referrers.append(route.request.headers.get("referer"))
+                route.abort()
+
             page.route(
                 "**/*",
-                lambda route: (
-                    route.continue_()
-                    if route.request.url.startswith(base_url + "/")
-                    else route.abort()
-                ),
+                route_request,
             )
             page.clock.install(time=datetime(2026, 9, 20, 12, tzinfo=UTC))
             page.goto(base_url, wait_until="domcontentloaded")
@@ -96,6 +102,7 @@ def check_browser(base_url: str) -> None:
             expect(page.locator("#preview-list")).not_to_contain_text("Sense")
             expect(page.locator("#preview-list")).not_to_contain_text("Kloster 2026")
             expect(page.locator(".rr-marker")).to_have_count(4)
+            assert tile_referrers and set(tile_referrers) == {base_url + "/"}, tile_referrers
             for label in page.locator(".preview-date").all():
                 assert label.evaluate("el => el.scrollWidth <= el.clientWidth"), (
                     "Date range must not overlap the event name"
